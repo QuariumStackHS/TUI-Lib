@@ -1,6 +1,6 @@
 #include "TUI.hpp"
 int Debug=0;
-ViewChar::ViewChar(int X, int Y, char C)
+View::ViewChar::ViewChar(int X, int Y, char C)
 {
     this->Char = C;
     this->Xpos = X;
@@ -8,6 +8,15 @@ ViewChar::ViewChar(int X, int Y, char C)
 }
 View::View()
 {
+}
+void View::render(){
+
+}
+View::ViewChar::ViewChar(int X, int Y, char C,View* Master){
+    this->Char = C;
+    this->Xpos = X;
+    this->Ypos = Y;
+    this->_MasterView=Master;
 }
 void View::add_Vertical(string str, int y, int x)
 {
@@ -22,12 +31,14 @@ void View::add_Vertical(string str, int y, int x)
             if ((this->Chars[i]->Ypos == iX) && (this->Chars[i]->Xpos == iY))
             {
                 this->Chars[i]->Char = str[iX - x];
+                this->Chars[i]->_MasterView=this;
                 is = 1;
             }
         }
         if (is == 0)
         {
-            ViewChar *C = new ViewChar(iY, iX, str[iX - x]);
+
+            ViewChar *C = new View::ViewChar(iY, iX, str[iX - x],this);
             this->Chars.push_back(C);
         }
     }
@@ -52,12 +63,13 @@ void View::add_Horizon(string str, int y, int x)
                 if ((this->Chars[i]->Xpos == iX) && (this->Chars[i]->Ypos == iY))
                 {
                     this->Chars[i]->Char = str[iX - x];
+                    this->Chars[i]->_MasterView=this;
                     is = 1;
                 }
             }
             if (is == 0)
             {
-                ViewChar *C = new ViewChar(iX - iscalc, iY, str[iX - x]);
+                ViewChar *C = new View::ViewChar(iX - iscalc, iY, str[iX - x],this);
                 this->Chars.push_back(C);
             }
         }
@@ -75,12 +87,13 @@ void MasterView::Display()
         cout << this->Buffer[i] <<"\n\r";
     }
 }
+
 void MasterView::Render()
 {
 
     for (int i = 0; i < this->Views.size(); i++)
     {
-
+        this->Views[i]->render();
         for (int j = 0; j < this->Views[i]->Chars.size(); j++)
         {
             for (int k = 0; k < this->Views[i]->Chars[j]->Xpos; k++)
@@ -94,6 +107,16 @@ void MasterView::Render()
         }
     }
 }
+void MasterView::RemoveView(View*SD){
+    for(int i=0;i<this->Views.size();i++){
+        if(this->Views[i]==SD){
+            for(int j=0;j<this->Views[i]->Chars.size();j++){
+                this->Buffer[this->Views[i]->Chars[j]->Ypos][this->Views[i]->Chars[j]->Xpos]=' ';
+            }
+            this->Views.erase(this->Views.begin()+i);
+        }
+    }
+}
 MasterView::MasterView(int maxX, int maxY)
 {
     this->MAXx = maxX;
@@ -103,4 +126,9 @@ void MasterView::addView(View *IN)
 {
 
     this->Views.push_back(IN);
+}
+void MasterView::clear(){
+    for (int i=0;i<MaxX;i++){
+        //this->Buffer[i]
+    }
 }

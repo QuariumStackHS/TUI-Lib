@@ -18,44 +18,51 @@
 #define BOLDMAGENTA "\033[1m\033[35m" /* Bold Magenta */
 #define BOLDCYAN "\033[1m\033[36m"    /* Bold Cyan */
 #define BOLDWHITE "\033[1m\033[37m"
+#include "size.h"
 using namespace std;
 
-
-class ViewChar
-{
-public:
-    friend class View;
-    friend class MasterView;
-private:
-
-    ViewChar(int, int, char);
-    char Char;
-    int Xpos;
-    int Ypos;
-};
 
 
 class View
 {
+protected:
+    class ViewChar
+    {
+    public:
+        friend class View;
+        friend class MasterView;
+        char Char;
+    private:
+        View* _MasterView;
+        ViewChar(int, int, char);
+        ViewChar(int, int, char,View*);
+        
+        int Xpos;
+        int Ypos;
+    };
 public:
     View();
     void add_Horizon(string, int, int);
     void add_Vertical(string, int, int);
+    void render();
+    vector<ViewChar *> Chars;
     friend class MasterView;
 
 private:
-    vector<ViewChar *> Chars;
+    
 };
 class MasterView
 {
 public:
     MasterView(int, int);
     void Render();
+    void clear();
     void Display();
     void addView(View *);
+    void RemoveView(View*);
 
 protected:
-    char Buffer[20][40];
+    char Buffer[MaxX][MaxY];
     vector<View *> Views;
     int MAXx;
     int MAXy;
