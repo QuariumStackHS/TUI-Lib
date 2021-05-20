@@ -117,6 +117,9 @@ void MasterView::RemoveView(View*SD){
         }
     }
 }
+void View::clear(){
+    this->Chars.erase(this->Chars.begin(),this->Chars.end());
+}
 MasterView::MasterView(int maxX, int maxY)
 {
     this->MAXx = maxX;
@@ -128,7 +131,8 @@ void MasterView::addView(View *IN)
     this->Views.push_back(IN);
 }
 void MasterView::clear(){
-    for (int i=0;i<MaxX;i++){
-        //this->Buffer[i]
+    for (int i=0;i<MaxY-1;i++){
+        for (int j=0;j<MaxX-1;j++){
+        this->Buffer[j][i]=' ';}
     }
 }

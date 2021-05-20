@@ -41,13 +41,13 @@ public:
 };
 void EditorView::render()
 {
+        this->clear();
         for (int i = 0; i < Values.size(); i++)
         {
-                int _index = i;
-                string Data;
-                if (this->current_index == _index)
+                string Data = "";
+                if (this->current_index == i)
                 {
-                        Data = Values[i]->_Key + " : " +YELLOW+ Values[i]->_Value+RESET;
+                        Data = Values[i]->_Key + " : " + YELLOW + Values[i]->_Value + RESET;
                 }
                 else
                 {
@@ -66,6 +66,7 @@ EditorView::EditorView(int XX, int YY)
         this->x = XX;
         this->y = YY;
 }
+
 vign::vign(vector<string> comb, int xX, int yY)
 {
         for (int i = 0; i < comb.size(); i++)
@@ -144,12 +145,12 @@ int main()
         Ch.push_back("G++");
         Ch.push_back("Objects");
         Ch.push_back("Linking");
-        Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → |", 25, 5);
+        Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit |", 25, 5);
         vign *IKD = new vign(Ch, 6, 5);
 
         EditorView *Config = new EditorView(7, 5);
         MSTS *Projectname = new MSTS("Project name", "None");
-        MSTS *Exename = new MSTS("Project name", "None");
+        MSTS *Exename = new MSTS("Executable Name", "None");
         Config->add_MSTS(Projectname, 0); // ("|Project name:"+projectname,7,5);
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
         View *gpp = new View();
@@ -174,13 +175,21 @@ int main()
         y = 2;
         string projectname;
         string EXEname;
+        //when on zero you can navigate in menus
+        int Lock = 0;
         while (1)
         {
+                MF->clear();
                 //seting the terminal in raw mode
 
                 if (IKD->current_index == 0)
                 {
                         //MF->addView()
+                        //Projectname->_Value=to_string(Config->current_index);
+                        if (Lock)
+                        {
+                                Config->Values[Config->current_index]->_Value = buffer;
+                        }
                         MF->RemoveView(gpp);
                         MF->addView(Config);
 
@@ -188,10 +197,15 @@ int main()
                 }
                 if (IKD->current_index == 1)
                 {
+                        Config->clear();
                         MF->RemoveView(Config);
                         MF->addView(gpp);
                         gpp->add_Horizon("|G++ C++ ISO :", 7, 5);
                 }
+
+                MF->Render();
+                MF->addView(IJ);
+                MF->clear();
                 MF->Render();
                 system("clear");
                 MF->Display();
@@ -199,7 +213,9 @@ int main()
                 //sleep(1);
                 ch = getchar();
                 string V = "Last char:" + to_string(ch);
-                IJ->add_Vertical(V, 30, 7);
+
+                IJ->clear();
+                IJ->add_Horizon(V, 39, 5);
                 //for(int hd=0;hd<errors->Chars.size();)
                 //errors->Chars[hd]->Char=' ';
                 if ((int)ch == (int)27)
@@ -208,7 +224,7 @@ int main()
                         //while(1);//you may still run the code
                         exit(0); //or terminate
                 }
-                else if ((int)ch == (int)Left)
+                else if (((int)ch == (int)Left) && (Lock == 0))
                 {
                         if (IKD->current_index == 0)
                         {
@@ -220,10 +236,31 @@ int main()
                                 IKD->render();
                         }
                 }
-                else if ((int)ch == (int)Down)
+                else if ((int)ch == (int)13)
                 {
+                        if (Lock == 1)
+                                Lock = 0;
+                        else
+                                Lock = 1;
+                        buffer = "";
                 }
-                else if ((int)ch == (int)100)
+                else if (((int)ch == (int)Down) && (Lock == 0))
+                {
+                        if (IKD->current_index == 0)
+                        {
+                                if (!(Config->current_index >= Config->Values.size() - 1))
+                                        Config->current_index++;
+                        }
+                }
+                else if (((int)ch == (int)UP) && (Lock == 0))
+                {
+                        if (IKD->current_index == 0)
+                        {
+                                if ((Config->current_index > 0))
+                                        Config->current_index--;
+                        }
+                }
+                else if (((int)ch == (int)100) && (Lock == 0))
                 {
                         if (IKD->current_index == Ch.size() - 1)
                         {
@@ -244,18 +281,12 @@ int main()
                         if (buffer.length() >= 1)
                                 buffer.pop_back();
                 }
-
-                else if (ch == '\n')
+                else
                 {
-                        y++;
-                        x = 2;
-                        I = new View();
-                        MF->addView(I);
-                        LargeBuffer += buffer + "\n";
-                        buffer = "";
+                        buffer.push_back(ch);
                 }
 
-                buffer.push_back(ch);
+                MF->RemoveView(IJ);
                 I->add_Horizon(buffer, y, x);
         }
 }

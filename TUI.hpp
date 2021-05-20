@@ -42,6 +42,7 @@ protected:
     };
 public:
     View();
+    void clear();
     void add_Horizon(string, int, int);
     void add_Vertical(string, int, int);
     void render();
