@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <vector>
 #define RESET "\033[0m"
 #define BLACK "\033[30m"              /* Black */
@@ -21,8 +22,6 @@
 #include "size.h"
 using namespace std;
 
-
-
 class View
 {
 protected:
@@ -32,16 +31,20 @@ protected:
         friend class View;
         friend class MasterView;
         char Char;
+
     private:
-        View* _MasterView;
+        View *_MasterView;
         ViewChar(int, int, char);
-        ViewChar(int, int, char,View*);
-        
+        ViewChar(int, int, char, View *);
+
         int Xpos;
         int Ypos;
     };
+
 public:
+    bool Visible=1;
     View();
+    string SaveAll();
     void clear();
     void add_Horizon(string, int, int);
     void add_Vertical(string, int, int);
@@ -50,7 +53,55 @@ public:
     friend class MasterView;
 
 private:
+};
+class MSTS
+{
+public:
+    MSTS(string Key, string Value,string alias);
+    string Save();
+    string Alias;
+    string _Key;
+    string _Value;
+};
+
+class vign : public View
+{
+public:
+    vign(vector<string>, int, int);
+    void render();
+    int bigestComb = 0;
+    vector<string> Comb;
+    int current_index = 0;
+    int x;
+    int y;
+};
+class EditorView : public View
+{
+public:
+    vector<MSTS *> Values;
+    int current_index = 0;
+    int x;
+    int y;
+    EditorView(int, int);
+    void render();
+    string SaveAll();
+    void add_MSTS(MSTS *, int);
     
+};
+class dropdownlist:public View{
+protected:
+    
+    int x;
+    int y;
+public:
+    void render();
+    dropdownlist(int,int);
+    string Key;
+    string Alias;
+    int current_index = 0;
+    void add_MSTS(MSTS *, int);
+    string SaveAll();
+    vector<MSTS*>EA;
 };
 class MasterView
 {
@@ -60,11 +111,16 @@ public:
     void clear();
     void Display();
     void addView(View *);
-    void RemoveView(View*);
+    void addView(EditorView *);
+    void RemoveView(View *);
+    void RemoveView(EditorView*);
+    void Save(string Filname);
+    void Load(string Filname);
 
 protected:
     char Buffer[MaxX][MaxY];
     vector<View *> Views;
+    vector<EditorView *> DATAC;
     int MAXx;
     int MAXy;
 };

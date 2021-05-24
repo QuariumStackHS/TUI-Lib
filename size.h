@@ -1,2 +1,2 @@
-    const int MaxX=40;
-    const int MaxY=50;
+    const int MaxX=28;
+    const int MaxY=70;

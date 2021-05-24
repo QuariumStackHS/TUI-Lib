@@ -1,0 +1,4 @@
+Config.Project = 'This'
+Config.Exe = 'Builder'
+G++.C++ = 'c++20'
+G++.Target = 'static'

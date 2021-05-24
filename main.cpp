@@ -2,103 +2,11 @@
 #include "Keys.h"
 
 #include <stdio.h>
+
 #include <time.h>
 #include <unistd.h>
 #include <termios.h>
-class MSTS
-{
-public:
-        MSTS(string Key, string Value);
-        string _Key;
-        string _Value;
-};
-MSTS::MSTS(string Key, string Value)
-{
-        this->_Key = Key;
-        this->_Value = Value;
-}
-class vign : public View
-{
-public:
-        vign(vector<string>, int, int);
-        void render();
-        int bigestComb = 0;
-        vector<string> Comb;
-        int current_index = 0;
-        int x;
-        int y;
-};
-class EditorView : public View
-{
-public:
-        vector<MSTS *> Values;
-        int current_index = 0;
-        int x;
-        int y;
-        EditorView(int, int);
-        void render();
-        void add_MSTS(MSTS *, int);
-};
-void EditorView::render()
-{
-        this->clear();
-        for (int i = 0; i < Values.size(); i++)
-        {
-                string Data = "";
-                if (this->current_index == i)
-                {
-                        Data = Values[i]->_Key + " : " + YELLOW + Values[i]->_Value + RESET;
-                }
-                else
-                {
-                        Data = Values[i]->_Key + " : " + Values[i]->_Value;
-                }
 
-                this->add_Horizon(Data, this->x + i, this->y);
-        }
-}
-void EditorView::add_MSTS(MSTS *data, int index)
-{
-        Values.insert(Values.begin() + index, data);
-}
-EditorView::EditorView(int XX, int YY)
-{
-        this->x = XX;
-        this->y = YY;
-}
-
-vign::vign(vector<string> comb, int xX, int yY)
-{
-        for (int i = 0; i < comb.size(); i++)
-        {
-                int nyt = comb[i].size();
-                if (nyt > this->bigestComb)
-                {
-                        this->bigestComb = nyt;
-                }
-                this->Comb.push_back(comb[i]);
-        }
-        this->x = xX;
-        this->y = yY;
-}
-void vign::render()
-{
-        string vignette = "";
-
-        for (int i = 0; i < this->Comb.size(); i++)
-        {
-                if (i == this->current_index)
-                {
-                        vignette.append(((string) "|").append(BOLDBLUE) + this->Comb[i] + RESET);
-                }
-                else
-                {
-                        vignette.append(((string) "|") + this->Comb[i]);
-                }
-        }
-        vignette.append("|");
-        this->add_Horizon(vignette, this->x, this->y);
-}
 char getch()
 {
         char buf = 0;
@@ -128,10 +36,17 @@ char getch()
 
 
 */
-int main()
+int main(int argc, char **argv)
 {
-
+        //char**FakeArgs={"Begin:","<>","TT","TTTTT"};
+        //Reltt_INT *Reltt=new Reltt_INT(argc,argv);
         MasterView *MF = new MasterView(MaxX, MaxY);
+        string Fname = "Base";
+        if (argc >= 2)
+        {
+                Fname = argv[1];
+        }
+
         View *I = new View();
         //I->add_Horizon("--------------------------", 0, 0);
         //I->add_Horizon("IP\t|\tDomaine\t|\tPort\t|\tName\0", 0, 0);
@@ -143,27 +58,48 @@ int main()
         vector<string> Ch;
         Ch.push_back("Config");
         Ch.push_back("G++");
-        Ch.push_back("Objects");
-        Ch.push_back("Linking");
-        Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit |", 25, 5);
+        Ch.push_back("Source");
+        Ch.push_back("Build");
+        Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit | \\ : Back ", 25, 5);
         vign *IKD = new vign(Ch, 6, 5);
 
         EditorView *Config = new EditorView(7, 5);
-        MSTS *Projectname = new MSTS("Project name", "None");
-        MSTS *Exename = new MSTS("Executable Name", "None");
+        MSTS *Projectname = new MSTS("|Project name", "None", "Config.Project");
+        MSTS *Exename = new MSTS("|Executable Name", "None", "Config.Exe");
         Config->add_MSTS(Projectname, 0); // ("|Project name:"+projectname,7,5);
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
-        View *gpp = new View();
-
+        EditorView *gpp = new EditorView(7, 5);
+        MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
+        MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
+        EditorView *source = new EditorView(7, 5);
+        MSTS *sourceFiles = new MSTS("|", "main.cpp", "source.files");
+        MSTS *sourceTarget = new MSTS("|Add Src file", "_", "");
+        source->add_MSTS(sourceTarget, 0);
+        gpp->add_MSTS(CppVersion, 0);
+        gpp->add_MSTS(Target, 1);
         IKD->render();
         //IJ->add_Vertical("this is a View", 5, 5);
         //IJ->add_Horizon("Ctrl+C Compile | ESC Exit |", 18, 0);
         //IJ->add_Vertical("Reltt Editor",0,2);
 
+        EditorView *addsrc = new EditorView(8, 5);
+        MSTS *pathFiles = new MSTS("|Path to Source file", "_", "");
+        MSTS *ObjName = new MSTS("|Obj-Name", "_", "");
+        MSTS *Save = new MSTS("|", "Save", "");
+        addsrc->add_MSTS(pathFiles, 0);
+        addsrc->add_MSTS(ObjName, 1);
+        addsrc->add_MSTS(Save, 2);
+        addsrc->Visible = 0;
+        MF->addView(addsrc);
+        MF->addView(source);
         MF->addView(I);
         MF->addView(IJ);
         MF->addView(IKD);
         MF->addView(Legend);
+        MF->addView(Config);
+        MF->addView(gpp);
+        MF->Load(Fname);
+        Config->Visible = 0;
 
         //char i;
         string LargeBuffer;
@@ -190,17 +126,46 @@ int main()
                         {
                                 Config->Values[Config->current_index]->_Value = buffer;
                         }
-                        MF->RemoveView(gpp);
-                        MF->addView(Config);
+                        gpp->clear();
+                        gpp->Visible = 0;
+                        Config->Visible = 1;
 
                         Config->render();
                 }
                 if (IKD->current_index == 1)
                 {
                         Config->clear();
-                        MF->RemoveView(Config);
-                        MF->addView(gpp);
-                        gpp->add_Horizon("|G++ C++ ISO :", 7, 5);
+                        Config->Visible = 0;
+                        source->clear();
+                        source->Visible = 0;
+                        if (Lock)
+                        {
+                                gpp->Values[gpp->current_index]->_Value = buffer;
+                        }
+                        gpp->Visible = 1;
+
+                        gpp->render();
+                }
+                if (IKD->current_index == 2)
+                {
+                        gpp->clear();
+                        gpp->Visible = 0;
+                        if (Lock)
+                        {
+                                if (source->current_index == -1)
+                                {
+                                        addsrc->Values[addsrc->current_index]->_Value = buffer;
+                                        addsrc->render();
+                                }
+                                else
+                                {
+                                        source->Values[source->current_index]->_Value = buffer;
+                                }
+                        }
+                        addsrc->render();
+                        source->Visible = 1;
+
+                        source->render();
                 }
 
                 MF->Render();
@@ -215,7 +180,7 @@ int main()
                 string V = "Last char:" + to_string(ch);
 
                 IJ->clear();
-                IJ->add_Horizon(V, 39, 5);
+                IJ->add_Horizon(V, 23, 5);
                 //for(int hd=0;hd<errors->Chars.size();)
                 //errors->Chars[hd]->Char=' ';
                 if ((int)ch == (int)27)
@@ -223,6 +188,12 @@ int main()
                         system("stty cooked");
                         //while(1);//you may still run the code
                         exit(0); //or terminate
+                }
+                else if ((int)ch==(int)92){
+                        if (IKD->current_index == 2){
+                                addsrc->Visible=0;
+                                source->current_index=0;
+                        }
                 }
                 else if (((int)ch == (int)Left) && (Lock == 0))
                 {
@@ -238,11 +209,24 @@ int main()
                 }
                 else if ((int)ch == (int)13)
                 {
-                        if (Lock == 1)
-                                Lock = 0;
+                        if ((source->current_index == 0) && (IKD->current_index == 2))
+                        {
+                                addsrc->Visible = 1;
+                                addsrc->render();
+                                source->current_index = -1;
+                        }
                         else
-                                Lock = 1;
-                        buffer = "";
+                        {
+                                if (Lock == 1)
+                                        Lock = 0;
+                                else
+                                        Lock = 1;
+                                buffer = "";
+                        }
+                }
+                else if ((int)ch == (int)19)
+                {
+                        MF->Save(Fname);
                 }
                 else if (((int)ch == (int)Down) && (Lock == 0))
                 {
@@ -251,6 +235,21 @@ int main()
                                 if (!(Config->current_index >= Config->Values.size() - 1))
                                         Config->current_index++;
                         }
+                        else if (IKD->current_index == 1)
+                        {
+                                if (!(gpp->current_index >= gpp->Values.size() - 1))
+                                        gpp->current_index++;
+                        }
+                        else if (IKD->current_index == 2)
+                        {
+                                if ((addsrc->Visible == 1))
+                                {
+                                        if (!(addsrc->current_index >= addsrc->Values.size() - 1))
+                                                addsrc->current_index++;
+                                }
+                                else if (!(source->current_index >= source->Values.size() - 1))
+                                        source->current_index++;
+                        }
                 }
                 else if (((int)ch == (int)UP) && (Lock == 0))
                 {
@@ -258,6 +257,21 @@ int main()
                         {
                                 if ((Config->current_index > 0))
                                         Config->current_index--;
+                        }
+                        if (IKD->current_index == 1)
+                        {
+                                if ((gpp->current_index > 0))
+                                        gpp->current_index--;
+                        }
+                        if (IKD->current_index == 2)
+                        {
+                                if (addsrc->Visible == 1)
+                                {
+                                        if ((addsrc->current_index > 0))
+                                                addsrc->current_index--;
+                                }
+                                else if ((source->current_index > 0))
+                                        source->current_index--;
                         }
                 }
                 else if (((int)ch == (int)100) && (Lock == 0))
