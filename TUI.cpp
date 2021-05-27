@@ -180,6 +180,24 @@ void MasterView::Save(string Filename)
         if (good == 1)
             ss << current;
     }
+    for (int i = 0; i < this->DATAD.size(); i++)
+    {
+        string current = this->DATAD[i]->SaveAll();
+        bool good = 1;
+        for (int j = 0; j < Did.size(); j++)
+        {
+            if (strcmp(Did[j].c_str(), current.c_str()) == 0)
+            {
+                good = 0;
+            }
+            else
+            {
+                Did.push_back(current);
+            }
+        }
+        if (good == 1)
+            ss << current;
+    }
     myfile << ss.str();
     myfile.close();
 }
@@ -214,11 +232,11 @@ string EditorView::SaveAll()
     string Chunk = "";
     for (int i = 0; i < this->Values.size(); i++)
     {
-        if(strcmp(this->Values[i]->Alias.c_str(),"")==0){
-
+        if (strcmp(this->Values[i]->Alias.c_str(), "") == 0)
+        {
         }
         else
-        Chunk += this->Values[i]->Save();
+            Chunk += this->Values[i]->Save();
     }
     //cout<<Chunk<<endl;
     //char i;
@@ -242,6 +260,20 @@ void EditorView::render()
 
         this->add_Horizon(Data, this->x + i, this->y);
     }
+}
+void MasterView::addView(dropdownlist *IN)
+{
+    bool exist = 0;
+    for (int i = 0; i < DATAD.size(); i++)
+    {
+        if (DATAD[i] == IN)
+        {
+            exist = 1;
+        }
+    }
+    if (exist == 0)
+        DATAD.push_back(IN);
+    Views.push_back(IN);
 }
 void MasterView::addView(EditorView *IN)
 {
@@ -310,55 +342,71 @@ void MasterView::Load(string Filename)
 
         while (getline(myfile, line))
         {
-            if(strcmp(line.c_str(),"")){
-            cout<<line<<endl;
-
-            //char i;
-            //cin>>i;
-            string Alias = "";
-            string Value = "";
-            
-            for (int i = 0; i < line.size(); i++)
-            {int Stage=0;
-                if (Stage == 0)
-                {
-                    if (line[i] == '=')
-                    {
-                        cout<<"Stage 1 enclenched"<<endl;
-                        for(int k=i;k<line.size();k++){
-                           if((line[k]=='\'')&&(Stage==0)){
-                               Stage++;
-                           }
-                           if (Stage==1){
-                               if(line[k]!='\''){
-                                   Value.push_back(line[k]);
-                               }
-                               
-                               else{i=line.size()+1;}
-                           }
-                        }
-                        
-                    }
-                    else{
-                        if(line[i]!=' ')
-                        Alias.push_back(line[i]);
-                    }
-                }
-            }
-            cout << Value << " : " << Alias<<Alias.size() << endl;
-            //char k;
-            //cin>>k;
-            for (int i = 0; i < this->DATAC.size(); i++)
+            if (strcmp(line.c_str(), ""))
             {
-                for (int j = 0; j < this->DATAC[i]->Values.size(); j++)
+                cout << line << endl;
+
+                //char i;
+                //cin>>i;
+                string Alias = "";
+                string Value = "";
+
+                for (int i = 0; i < line.size(); i++)
                 {
-                    cout<<this->DATAC[i]->Values[j]->Alias<<this->DATAC[i]->Values[j]->Alias.size()<<endl;
-                    if (strcmp(this->DATAC[i]->Values[j]->Alias.c_str(), Alias.c_str()) == 0)
+                    int Stage = 0;
+                    if (Stage == 0)
                     {
-                        this->DATAC[i]->Values[j]->_Value = Value;
+                        if (line[i] == '=')
+                        {
+                            cout << "Stage 1 enclenched" << endl;
+                            for (int k = i; k < line.size(); k++)
+                            {
+                                if ((line[k] == '\'') && (Stage == 0))
+                                {
+                                    Stage++;
+                                }
+                                if (Stage == 1)
+                                {
+                                    if (line[k] != '\'')
+                                    {
+                                        Value.push_back(line[k]);
+                                    }
+
+                                    else
+                                    {
+                                        i = line.size() + 1;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (line[i] != ' ')
+                                Alias.push_back(line[i]);
+                        }
                     }
                 }
-            }
+                cout << Value << " : " << Alias << Alias.size() << endl;
+                //char k;
+                //cin>>k;
+                for (int i = 0; i < this->DATAC.size(); i++)
+                {
+                    for (int j = 0; j < this->DATAC[i]->Values.size(); j++)
+                    {
+                        cout << this->DATAC[i]->Values[j]->Alias << this->DATAC[i]->Values[j]->Alias.size() << endl;
+                        if (strcmp(this->DATAC[i]->Values[j]->Alias.c_str(), Alias.c_str()) == 0)
+                        {
+                            this->DATAC[i]->Values[j]->_Value = Value;
+                        }
+                    }
+                }
+                for (int i = 0; i < this->DATAD.size(); i++)
+                {
+                    if (strcmp(this->DATAD[i]->Alias.c_str(), Alias.c_str()) == 0)
+                    {
+                        this->DATAD[i]->current_index = stoi(Value);
+                    }
+                }
             }
         }
         //char fd;
@@ -367,14 +415,47 @@ void MasterView::Load(string Filename)
     }
 
     else
-        cout << "Unable to Load file\""<<Filename<<"\""<<endl;
+        cout << "Unable to Load file\"" << Filename << "\"" << endl;
 }
-dropdownlist::dropdownlist(int X,int Y){
-this->x=X;
+dropdownlist::dropdownlist(int X, int Y)
+{
+    this->x = X;
+    this->y = Y;
 }
-    void dropdownlist::add_MSTS(MSTS *, int){
-
+void dropdownlist::add_MSTS(MSTS *data, int index)
+{
+    EA.insert(EA.begin() + index, data);
+}
+string dropdownlist::SaveAll()
+{
+    return this->Alias + " = '" + to_string(this->current_index) + "'";
+}
+void dropdownlist::render()
+{
+    add_Horizon(this->Key, x, y);
+    if (ischoosing == 1)
+    {
+        for (int i = 0; i < this->EA.size(); i++)
+        {
+            if (i == this->current_index)
+            {
+                this->add_Horizon(((string)YELLOW) + this->EA[i]->_Value + RESET, x - i, y + this->Key.size());
+            }
+            else
+            {
+                this->add_Horizon(this->EA[i]->_Value, x - i, y + this->Key.size());
+            }
+        }
     }
-string dropdownlist::SaveAll(){
-return this->Alias+" = '"+to_string(this->current_index)+"'";
+    else
+    {
+        if (isOn)
+        {
+            this->add_Horizon(((string)YELLOW) + this->EA[this->current_index]->_Value + RESET, x, y + this->Key.size());
+        }
+        else
+        {
+            this->add_Horizon(this->EA[this->current_index]->_Value, x, y + this->Key.size());
+        }
+    }
 }

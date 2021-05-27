@@ -38,6 +38,8 @@ char getch()
 */
 int main(int argc, char **argv)
 {
+        string circlechar = "/|\\-\\-";
+        int XXindex = 0;
         //char**FakeArgs={"Begin:","<>","TT","TTTTT"};
         //Reltt_INT *Reltt=new Reltt_INT(argc,argv);
         MasterView *MF = new MasterView(MaxX, MaxY);
@@ -69,6 +71,9 @@ int main(int argc, char **argv)
         Config->add_MSTS(Projectname, 0); // ("|Project name:"+projectname,7,5);
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
         EditorView *gpp = new EditorView(7, 5);
+
+        dropdownlist *buildtype = new dropdownlist(10, 5);
+
         MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
         MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
         EditorView *source = new EditorView(7, 5);
@@ -76,7 +81,6 @@ int main(int argc, char **argv)
         MSTS *sourceTarget = new MSTS("|Add Src file", "_", "");
         source->add_MSTS(sourceTarget, 0);
         gpp->add_MSTS(CppVersion, 0);
-        gpp->add_MSTS(Target, 1);
         IKD->render();
         //IJ->add_Vertical("this is a View", 5, 5);
         //IJ->add_Horizon("Ctrl+C Compile | ESC Exit |", 18, 0);
@@ -90,6 +94,19 @@ int main(int argc, char **argv)
         addsrc->add_MSTS(ObjName, 1);
         addsrc->add_MSTS(Save, 2);
         addsrc->Visible = 0;
+        buildtype->Visible = 0;
+        MSTS *MSTS_Excutable = new MSTS("", "Executable", "");
+        MSTS *MSTS_Shared = new MSTS("", "Shared", "");
+        MSTS *MSTS_Static = new MSTS("", "Static", "");
+        buildtype->Key = "|Build Type     ";
+        buildtype->Alias = "Build.Type";
+        buildtype->add_MSTS(MSTS_Excutable, 0);
+        buildtype->add_MSTS(MSTS_Shared, 1);
+        buildtype->add_MSTS(MSTS_Static, 2);
+        View *Roue = new View();
+        int Rouex = 5;
+        int Rouey = 5;
+        //MF->addView()
         MF->addView(addsrc);
         MF->addView(source);
         MF->addView(I);
@@ -98,6 +115,7 @@ int main(int argc, char **argv)
         MF->addView(Legend);
         MF->addView(Config);
         MF->addView(gpp);
+        MF->addView(buildtype);
         MF->Load(Fname);
         Config->Visible = 0;
 
@@ -113,13 +131,27 @@ int main(int argc, char **argv)
         string EXEname;
         //when on zero you can navigate in menus
         int Lock = 0;
+        MF->addView(Roue);
         while (1)
         {
                 MF->clear();
+                string sdf = "";
+                sdf += circlechar[XXindex];
+                Roue->add_Horizon(sdf, Rouex, Rouey);
+                if (circlechar.size() - 1 == XXindex)
+                {
+                        XXindex = 0;
+                }
+                else
+                {
+                        XXindex++;
+                }
                 //seting the terminal in raw mode
-
+                //Config
                 if (IKD->current_index == 0)
                 {
+                        buildtype->clear();
+                        buildtype->Visible = 0;
                         //MF->addView()
                         //Projectname->_Value=to_string(Config->current_index);
                         if (Lock)
@@ -132,22 +164,37 @@ int main(int argc, char **argv)
 
                         Config->render();
                 }
+                //G++
                 if (IKD->current_index == 1)
                 {
+                        addsrc->clear();
+                        addsrc->Visible = 0;
                         Config->clear();
                         Config->Visible = 0;
                         source->clear();
                         source->Visible = 0;
+                        buildtype->Visible = 1;
+
                         if (Lock)
                         {
-                                gpp->Values[gpp->current_index]->_Value = buffer;
+                                if (gpp->current_index == 0)
+                                {
+                                        gpp->Values[gpp->current_index]->_Value = buffer;
+                                }
                         }
                         gpp->Visible = 1;
-
+                        if(gpp->current_index!=-1){
+                                buildtype->isOn=0;
+                        }
+                        buildtype->clear();
+                        buildtype->render();
                         gpp->render();
                 }
+                //Source
                 if (IKD->current_index == 2)
                 {
+                        buildtype->clear();
+                        buildtype->Visible = 0;
                         gpp->clear();
                         gpp->Visible = 0;
                         if (Lock)
@@ -189,10 +236,12 @@ int main(int argc, char **argv)
                         //while(1);//you may still run the code
                         exit(0); //or terminate
                 }
-                else if ((int)ch==(int)92){
-                        if (IKD->current_index == 2){
-                                addsrc->Visible=0;
-                                source->current_index=0;
+                else if ((int)ch == (int)92)
+                {
+                        if (IKD->current_index == 2)
+                        {
+                                addsrc->Visible = 0;
+                                source->current_index = 0;
                         }
                 }
                 else if (((int)ch == (int)Left) && (Lock == 0))
@@ -209,19 +258,37 @@ int main(int argc, char **argv)
                 }
                 else if ((int)ch == (int)13)
                 {
+                        if (buildtype->ischoosing == 1){
+                                buildtype->ischoosing = 0;
+                                buildtype->render();
+                                Lock = -1;
+                                gpp->current_index =1;
+                        }
                         if ((source->current_index == 0) && (IKD->current_index == 2))
                         {
                                 addsrc->Visible = 1;
                                 addsrc->render();
                                 source->current_index = -1;
                         }
+                        else if (buildtype->Visible == 1 && gpp->current_index == -1)
+                        {
+                                buildtype->ischoosing = 1;
+
+                        }
+                        else if (buildtype->Visible == 0 && gpp->current_index == -1){
+                                buildtype->ischoosing = 0;
+
+                        }
                         else
                         {
                                 if (Lock == 1)
                                         Lock = 0;
-                                else
+                                else if(Lock==0)
                                         Lock = 1;
                                 buffer = "";
+                        }
+                        if (Lock==-1){
+                                Lock=0;
                         }
                 }
                 else if ((int)ch == (int)19)
@@ -237,7 +304,22 @@ int main(int argc, char **argv)
                         }
                         else if (IKD->current_index == 1)
                         {
-                                if (!(gpp->current_index >= gpp->Values.size() - 1))
+                                if (gpp->current_index == 0)
+                                {
+                                        gpp->current_index = -1;
+                                        buildtype->isOn=1;
+                                        buildtype->render();
+                                }
+                                else if (buildtype->ischoosing == 1)
+                                {
+                                                                                if ((buildtype->current_index > 0))
+                                        {
+                                                buildtype->current_index--;
+                                                buildtype->render();
+                                        }
+
+                                }
+                                else if (!(gpp->current_index >= gpp->Values.size() - 1))
                                         gpp->current_index++;
                         }
                         else if (IKD->current_index == 2)
@@ -262,6 +344,17 @@ int main(int argc, char **argv)
                         {
                                 if ((gpp->current_index > 0))
                                         gpp->current_index--;
+                                else if (buildtype->ischoosing == 1)
+                                {
+                                        if (!(buildtype->current_index >= buildtype->EA.size() - 1))
+                                        {
+                                                buildtype->current_index++;
+                                                buildtype->render();
+                                        }
+                                }
+                                else if(!(gpp->current_index>=0)){
+                                        gpp->current_index++;
+                                }
                         }
                         if (IKD->current_index == 2)
                         {

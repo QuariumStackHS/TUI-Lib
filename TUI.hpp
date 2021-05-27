@@ -94,6 +94,8 @@ protected:
     int x;
     int y;
 public:
+bool isOn=0;
+bool ischoosing=0;
     void render();
     dropdownlist(int,int);
     string Key;
@@ -112,8 +114,10 @@ public:
     void Display();
     void addView(View *);
     void addView(EditorView *);
+    void addView(dropdownlist *);
     void RemoveView(View *);
     void RemoveView(EditorView*);
+    void RemoveView(dropdownlist *);
     void Save(string Filname);
     void Load(string Filname);
 
@@ -121,6 +125,7 @@ protected:
     char Buffer[MaxX][MaxY];
     vector<View *> Views;
     vector<EditorView *> DATAC;
+    vector<dropdownlist *> DATAD;
     int MAXx;
     int MAXy;
 };

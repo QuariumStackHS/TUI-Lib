@@ -1,4 +1,4 @@
-Config.Project = 'This'
-Config.Exe = 'Builder'
+Config.Project = 'UnifCompiler'
+Config.Exe = 'Prog'
 G++.C++ = 'c++20'
-G++.Target = 'static'
+Build.Type = '0'
