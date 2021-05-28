@@ -1,4 +1,0 @@
-Config.Project = 'UnifCompiler'
-Config.Exe = 'Prog'
-G++.C++ = 'c++20'
-Build.Type = '0'

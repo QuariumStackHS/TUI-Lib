@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
         MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
         MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
-        EditorView *source = new EditorView(7, 5);
+        EditorView *source = new EditorView(10, 5);
         MSTS *sourceFiles = new MSTS("|", "main.cpp", "source.files");
         MSTS *sourceTarget = new MSTS("|Add Src file", "_", "");
         source->add_MSTS(sourceTarget, 0);
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
         //IJ->add_Horizon("Ctrl+C Compile | ESC Exit |", 18, 0);
         //IJ->add_Vertical("Reltt Editor",0,2);
 
-        EditorView *addsrc = new EditorView(8, 5);
+        EditorView *addsrc = new EditorView(7, 5);
         MSTS *pathFiles = new MSTS("|Path to Source file", "_", "");
         MSTS *ObjName = new MSTS("|Obj-Name", "_", "");
         MSTS *Save = new MSTS("|", "Save", "");
@@ -98,6 +98,10 @@ int main(int argc, char **argv)
         MSTS *MSTS_Excutable = new MSTS("", "Executable", "");
         MSTS *MSTS_Shared = new MSTS("", "Shared", "");
         MSTS *MSTS_Static = new MSTS("", "Static", "");
+        MSTS *MSTS_sourcefiles = new MSTS("files", "_", "source.cppfiles");
+        MSTS *MSTS_objfiles = new MSTS("objs", "_", "source.cppobj");
+        source->add_MSTS(MSTS_sourcefiles, 1);
+        source->add_MSTS(MSTS_objfiles, 2);
         buildtype->Key = "|Build Type     ";
         buildtype->Alias = "Build.Type";
         buildtype->add_MSTS(MSTS_Excutable, 0);
@@ -129,6 +133,8 @@ int main(int argc, char **argv)
         y = 2;
         string projectname;
         string EXEname;
+        string sourcebuffer;
+        string objbuffer;
         //when on zero you can navigate in menus
         int Lock = 0;
         MF->addView(Roue);
@@ -183,8 +189,9 @@ int main(int argc, char **argv)
                                 }
                         }
                         gpp->Visible = 1;
-                        if(gpp->current_index!=-1){
-                                buildtype->isOn=0;
+                        if (gpp->current_index != -1)
+                        {
+                                buildtype->isOn = 0;
                         }
                         buildtype->clear();
                         buildtype->render();
@@ -201,13 +208,28 @@ int main(int argc, char **argv)
                         {
                                 if (source->current_index == -1)
                                 {
-                                        addsrc->Values[addsrc->current_index]->_Value = buffer;
+                                        if (ch != 13)
+                                                addsrc->Values[addsrc->current_index]->_Value = buffer;
+
+                                        //addsrc->Values[addsrc->current_index]->_Value += buffer;
                                         addsrc->render();
                                 }
                                 else
                                 {
                                         source->Values[source->current_index]->_Value = buffer;
                                 }
+                        }
+                        if (addsrc->current_index == 2)
+                        {
+                                if (ch == 13){
+                                sourcebuffer += addsrc->Values[0]->_Value + " ";
+
+                                objbuffer += addsrc->Values[1]->_Value + " ";
+                                MSTS_sourcefiles->_Value = sourcebuffer;
+                                MSTS_objfiles->_Value = objbuffer;
+                                addsrc->current_index=0;
+                                }
+                                //cout<<objbuffer<<sourcebuffer<<endl;
                         }
                         addsrc->render();
                         source->Visible = 1;
@@ -258,11 +280,12 @@ int main(int argc, char **argv)
                 }
                 else if ((int)ch == (int)13)
                 {
-                        if (buildtype->ischoosing == 1){
+                        if (buildtype->ischoosing == 1)
+                        {
                                 buildtype->ischoosing = 0;
                                 buildtype->render();
                                 Lock = -1;
-                                gpp->current_index =1;
+                                gpp->current_index = 1;
                         }
                         if ((source->current_index == 0) && (IKD->current_index == 2))
                         {
@@ -273,22 +296,27 @@ int main(int argc, char **argv)
                         else if (buildtype->Visible == 1 && gpp->current_index == -1)
                         {
                                 buildtype->ischoosing = 1;
-
                         }
-                        else if (buildtype->Visible == 0 && gpp->current_index == -1){
+                        else if (buildtype->Visible == 0 && gpp->current_index == -1)
+                        {
                                 buildtype->ischoosing = 0;
-
+                        }
+                        else if ((addsrc->current_index == 2) && (addsrc->Visible == 1))
+                        {
+                                //pathFiles->_Value+' ';
+                                //ObjName->_Value+' ';
                         }
                         else
                         {
                                 if (Lock == 1)
                                         Lock = 0;
-                                else if(Lock==0)
+                                else if (Lock == 0)
                                         Lock = 1;
                                 buffer = "";
                         }
-                        if (Lock==-1){
-                                Lock=0;
+                        if (Lock == -1)
+                        {
+                                Lock = 0;
                         }
                 }
                 else if ((int)ch == (int)19)
@@ -307,17 +335,16 @@ int main(int argc, char **argv)
                                 if (gpp->current_index == 0)
                                 {
                                         gpp->current_index = -1;
-                                        buildtype->isOn=1;
+                                        buildtype->isOn = 1;
                                         buildtype->render();
                                 }
                                 else if (buildtype->ischoosing == 1)
                                 {
-                                                                                if ((buildtype->current_index > 0))
+                                        if ((buildtype->current_index > 0))
                                         {
                                                 buildtype->current_index--;
                                                 buildtype->render();
                                         }
-
                                 }
                                 else if (!(gpp->current_index >= gpp->Values.size() - 1))
                                         gpp->current_index++;
@@ -352,7 +379,8 @@ int main(int argc, char **argv)
                                                 buildtype->render();
                                         }
                                 }
-                                else if(!(gpp->current_index>=0)){
+                                else if (!(gpp->current_index >= 0))
+                                {
                                         gpp->current_index++;
                                 }
                         }
