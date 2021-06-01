@@ -2,11 +2,30 @@
 #include "Keys.h"
 
 #include <stdio.h>
-
+#include <sstream>
 #include <time.h>
 #include <unistd.h>
 #include <termios.h>
+size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
+{
+        size_t pos = txt.find(ch);
+        size_t initialPos = 0;
+        strs.clear();
 
+        // Decompose statement
+        while (pos != std::string::npos)
+        {
+                strs.push_back(txt.substr(initialPos, pos - initialPos));
+                initialPos = pos + 1;
+
+                pos = txt.find(ch, initialPos);
+        }
+
+        // Add the last one
+        strs.push_back(txt.substr(initialPos, std::min(pos, txt.size()) - initialPos + 1));
+
+        return strs.size();
+}
 char getch()
 {
         char buf = 0;
@@ -36,17 +55,65 @@ char getch()
 
 
 */
+
+int compile(MSTS *OBJ, MSTS *SRC, string cppV)
+{
+        vector<string> OBJs;
+        vector<string> SRCs;
+        split(OBJ->_Value, OBJs, ' ');
+        split(SRC->_Value, SRCs, ' ');
+        int ret = 0;
+        for (int i = 0; i < OBJs.size(); i++)
+        {
+                if(strcmp(OBJs[i].c_str()," ")==1){
+                stringstream ss;
+                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i];
+                ret += system(ss.str().c_str());
+                if (ret>=1){
+                        cout<<ss.str()<<endl;
+                }
+                }
+        }
+        return ret;
+}
+int link(MSTS *OBJ, MSTS *LIBS, string buildname, int buildT)
+{
+        stringstream ss;
+        ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o " << buildname;
+        switch (buildT)
+        {
+        case 0:
+                /* code */
+                break;
+        case 1:
+                ss << " -shared";
+                break;
+        case 2:
+                ss << " -static";
+                /* code */
+                break;
+        default:
+                break;
+        }
+        system(ss.str().c_str());
+}
 int main(int argc, char **argv)
 {
-        string circlechar = "/|\\-\\-";
+        string circlechar = "/|\\-";
         int XXindex = 0;
         //char**FakeArgs={"Begin:","<>","TT","TTTTT"};
         //Reltt_INT *Reltt=new Reltt_INT(argc,argv);
         MasterView *MF = new MasterView(MaxX, MaxY);
-        string Fname = "Base";
-        if (argc >= 2)
+        string Fname = "Base.rgp";
+        string command = "";
+        if (argc == 2)
         {
                 Fname = argv[1];
+        }
+        else if (argc == 3)
+        {
+                Fname = argv[1];
+                command = argv[2];
         }
 
         View *I = new View();
@@ -68,11 +135,14 @@ int main(int argc, char **argv)
         EditorView *Config = new EditorView(7, 5);
         MSTS *Projectname = new MSTS("|Project name", "None", "Config.Project");
         MSTS *Exename = new MSTS("|Executable Name", "None", "Config.Exe");
+        MSTS *AddLib = new MSTS("|Add Lib", "_", "");
         Config->add_MSTS(Projectname, 0); // ("|Project name:"+projectname,7,5);
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
+        Config->add_MSTS(AddLib, 2);
         EditorView *gpp = new EditorView(7, 5);
 
         dropdownlist *buildtype = new dropdownlist(10, 5);
+        dropdownlist *CompileBuild = new dropdownlist(10, 5);
 
         MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
         MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
@@ -87,21 +157,32 @@ int main(int argc, char **argv)
         //IJ->add_Vertical("Reltt Editor",0,2);
 
         EditorView *addsrc = new EditorView(7, 5);
+
+        EditorView *addobj = new EditorView(10, 5);
+
         MSTS *pathFiles = new MSTS("|Path to Source file", "_", "");
         MSTS *ObjName = new MSTS("|Obj-Name", "_", "");
         MSTS *Save = new MSTS("|", "Save", "");
         addsrc->add_MSTS(pathFiles, 0);
         addsrc->add_MSTS(ObjName, 1);
         addsrc->add_MSTS(Save, 2);
+        MSTS *Objpath = new MSTS("|Path to Object(*.o/*.lib/*.so/*.dll/*.a)", "_", "");
+        MSTS *SaveBtn = new MSTS("|", "Save Object", "");
+        addobj->add_MSTS(Objpath, 0);
+        addobj->add_MSTS(SaveBtn, 1);
+
         addsrc->Visible = 0;
         buildtype->Visible = 0;
+        CompileBuild->Visible = 0;
         MSTS *MSTS_Excutable = new MSTS("", "Executable", "");
         MSTS *MSTS_Shared = new MSTS("", "Shared", "");
         MSTS *MSTS_Static = new MSTS("", "Static", "");
         MSTS *MSTS_sourcefiles = new MSTS("files", "_", "source.cppfiles");
         MSTS *MSTS_objfiles = new MSTS("objs", "_", "source.cppobj");
+        MSTS *MSTS_objLib = new MSTS("Libs", "", "source.Libs");
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
+        source->add_MSTS(MSTS_objLib, 3);
         buildtype->Key = "|Build Type     ";
         buildtype->Alias = "Build.Type";
         buildtype->add_MSTS(MSTS_Excutable, 0);
@@ -110,7 +191,17 @@ int main(int argc, char **argv)
         View *Roue = new View();
         int Rouex = 5;
         int Rouey = 5;
+
+        MSTS *BuildButton = new MSTS("", "Build", "");
+        MSTS *CompileButton = new MSTS("", "Compile", "");
+        MSTS *LinkButton = new MSTS("", "Link", "");
+        CompileBuild->add_MSTS(BuildButton, 0);
+        CompileBuild->add_MSTS(CompileButton, 1);
+        CompileBuild->add_MSTS(LinkButton, 2);
         //MF->addView()
+        addobj->Visible = 0;
+        MF->addView(addobj);
+        MF->addView(CompileBuild);
         MF->addView(addsrc);
         MF->addView(source);
         MF->addView(I);
@@ -127,7 +218,7 @@ int main(int argc, char **argv)
         string LargeBuffer;
         string buffer;
         char ch;
-        system("stty raw");
+        
         int x, y = 0;
         x = 2;
         y = 2;
@@ -138,290 +229,394 @@ int main(int argc, char **argv)
         //when on zero you can navigate in menus
         int Lock = 0;
         MF->addView(Roue);
-        while (1)
+        if (strcmp(command.c_str(), "build") == 0)
         {
-                MF->clear();
-                string sdf = "";
-                sdf += circlechar[XXindex];
-                Roue->add_Horizon(sdf, Rouex, Rouey);
-                if (circlechar.size() - 1 == XXindex)
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                                                link(MSTS_objfiles, MSTS_objLib, Config->Values[1]->_Value, buildtype->current_index);
+        }
+        else
+        {
+                system("stty raw");
+                while (1)
                 {
-                        XXindex = 0;
-                }
-                else
-                {
-                        XXindex++;
-                }
-                //seting the terminal in raw mode
-                //Config
-                if (IKD->current_index == 0)
-                {
-                        buildtype->clear();
-                        buildtype->Visible = 0;
-                        //MF->addView()
-                        //Projectname->_Value=to_string(Config->current_index);
-                        if (Lock)
+                        MF->clear();
+                        string sdf = "";
+                        sdf += circlechar[XXindex];
+                        Roue->add_Horizon(sdf, Rouex, Rouey);
+                        if (circlechar.size() - 1 == XXindex)
                         {
-                                Config->Values[Config->current_index]->_Value = buffer;
+                                XXindex = 0;
                         }
-                        gpp->clear();
-                        gpp->Visible = 0;
-                        Config->Visible = 1;
-
-                        Config->render();
-                }
-                //G++
-                if (IKD->current_index == 1)
-                {
-                        addsrc->clear();
-                        addsrc->Visible = 0;
-                        Config->clear();
-                        Config->Visible = 0;
-                        source->clear();
-                        source->Visible = 0;
-                        buildtype->Visible = 1;
-
-                        if (Lock)
+                        else
                         {
-                                if (gpp->current_index == 0)
+                                XXindex++;
+                        }
+                        //seting the terminal in raw mode
+                        //Config
+                        if (IKD->current_index == 0)
+                        {
+                                buildtype->clear();
+                                buildtype->Visible = 0;
+                                //MF->addView()
+                                //Projectname->_Value=to_string(Config->current_index);
+                                if ((Lock) && ((Config->current_index != 2) && Config->current_index != -1))
                                 {
-                                        gpp->Values[gpp->current_index]->_Value = buffer;
+                                        Config->Values[Config->current_index]->_Value = buffer;
+                                }
+                                else if ((Config->current_index == 2) && (Lock))
+                                {
+                                        addobj->Visible = 1;
+
+                                        Config->current_index = -1;
+                                        Lock = 0;
+                                }
+                                else if (Config->current_index == -1)
+                                {
+                                        if (Lock)
+                                        {
+                                                if (addobj->current_index == 0)
+                                                        addobj->Values[addobj->current_index]->_Value = buffer;
+                                                else
+                                                {
+                                                        MSTS_objLib->_Value += addobj->Values[0]->_Value + ' ';
+                                                        Lock = 0;
+                                                }
+                                        }
+                                }
+                                gpp->clear();
+                                gpp->Visible = 0;
+                                Config->Visible = 1;
+                                addobj->render();
+                                Config->render();
+                        }
+                        //G++
+                        if (IKD->current_index == 1)
+                        {
+                                addobj->clear();
+                                addobj->Visible = 0;
+                                addsrc->clear();
+                                addsrc->Visible = 0;
+                                Config->clear();
+                                Config->Visible = 0;
+                                source->clear();
+                                source->Visible = 0;
+                                buildtype->Visible = 1;
+
+                                if (Lock)
+                                {
+                                        if (gpp->current_index == 0)
+                                        {
+                                                gpp->Values[gpp->current_index]->_Value = buffer;
+                                        }
+                                }
+                                gpp->Visible = 1;
+                                if (gpp->current_index != -1)
+                                {
+                                        buildtype->isOn = 0;
+                                }
+                                buildtype->clear();
+                                buildtype->render();
+                                gpp->render();
+                        }
+                        //Source
+                        if (IKD->current_index == 2)
+                        {
+                                CompileBuild->Visible = 0;
+                                CompileBuild->clear();
+                                buildtype->clear();
+                                buildtype->Visible = 0;
+                                gpp->clear();
+                                gpp->Visible = 0;
+                                if (Lock)
+                                {
+                                        if (source->current_index == -1)
+                                        {
+                                                if (ch != 13)
+                                                        addsrc->Values[addsrc->current_index]->_Value = buffer;
+
+                                                //addsrc->Values[addsrc->current_index]->_Value += buffer;
+                                                addsrc->render();
+                                        }
+                                        else
+                                        {
+                                                source->Values[source->current_index]->_Value = buffer;
+                                        }
+                                }
+                                if (addsrc->current_index == 2)
+                                {
+                                        if (ch == 13)
+                                        {
+                                                sourcebuffer += addsrc->Values[0]->_Value + " ";
+
+                                                objbuffer += addsrc->Values[1]->_Value + " ";
+                                                MSTS_sourcefiles->_Value = sourcebuffer;
+                                                MSTS_objfiles->_Value = objbuffer;
+                                                addsrc->current_index = 0;
+                                        }
+                                        //cout<<objbuffer<<sourcebuffer<<endl;
+                                }
+                                addsrc->render();
+                                source->Visible = 1;
+
+                                source->render();
+                        }
+                        //build
+                        else if ((IKD->current_index == 3))
+                        {
+                                addsrc->Visible = 0;
+                                addsrc->clear();
+                                source->Visible = 0;
+                                source->clear();
+                                CompileBuild->clear();
+                                CompileBuild->Visible = 1;
+                                CompileBuild->ischoosing = 1;
+                                if (ch == 13)
+                                {
+                                        int i = CompileBuild->current_index;
+                                        switch (i)
+                                        {
+                                        case 0:
+                                                //build
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                                                link(MSTS_objfiles, MSTS_objLib, Config->Values[1]->_Value, buildtype->current_index);
+                                                /* code */
+                                                break;
+                                        case 1:
+                                                //compile
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                                                break;
+                                        case 2:
+                                                link(MSTS_objfiles, MSTS_objLib, Config->Values[1]->_Value, buildtype->current_index);
+                                                //link
+                                                break;
+                                        default:
+                                                break;
+                                        }
+                                }
+                                CompileBuild->render();
+                        }
+
+                        MF->Render();
+                        MF->addView(IJ);
+                        MF->clear();
+                        MF->Render();
+                        system("clear");
+                        MF->Display();
+
+                        //sleep(1);
+                        ch = getchar();
+                        string V = "Last char:" + to_string(ch);
+
+                        IJ->clear();
+                        IJ->add_Horizon(V, 23, 5);
+                        //for(int hd=0;hd<errors->Chars.size();)
+                        //errors->Chars[hd]->Char=' ';
+                        if ((int)ch == (int)27)
+                        { //terminate or come out of raw mode on "~" pressed
+                                system("stty cooked");
+                                //while(1);//you may still run the code
+                                exit(0); //or terminate
+                        }
+                        else if ((int)ch == (int)92)
+                        {
+                                if (IKD->current_index == 2)
+                                {
+                                        addsrc->Visible = 0;
+                                        source->current_index = 0;
                                 }
                         }
-                        gpp->Visible = 1;
-                        if (gpp->current_index != -1)
+                        else if (((int)ch == (int)Left) && (Lock == 0))
                         {
-                                buildtype->isOn = 0;
-                        }
-                        buildtype->clear();
-                        buildtype->render();
-                        gpp->render();
-                }
-                //Source
-                if (IKD->current_index == 2)
-                {
-                        buildtype->clear();
-                        buildtype->Visible = 0;
-                        gpp->clear();
-                        gpp->Visible = 0;
-                        if (Lock)
-                        {
-                                if (source->current_index == -1)
+                                if (IKD->current_index == 0)
                                 {
-                                        if (ch != 13)
-                                                addsrc->Values[addsrc->current_index]->_Value = buffer;
-
-                                        //addsrc->Values[addsrc->current_index]->_Value += buffer;
-                                        addsrc->render();
+                                        errors->add_Horizon("<-Max index", 15, 6);
                                 }
                                 else
                                 {
-                                        source->Values[source->current_index]->_Value = buffer;
+                                        IKD->current_index--;
+                                        IKD->render();
                                 }
                         }
-                        if (addsrc->current_index == 2)
+                        else if ((int)ch == (int)13)
                         {
-                                if (ch == 13){
-                                sourcebuffer += addsrc->Values[0]->_Value + " ";
-
-                                objbuffer += addsrc->Values[1]->_Value + " ";
-                                MSTS_sourcefiles->_Value = sourcebuffer;
-                                MSTS_objfiles->_Value = objbuffer;
-                                addsrc->current_index=0;
-                                }
-                                //cout<<objbuffer<<sourcebuffer<<endl;
-                        }
-                        addsrc->render();
-                        source->Visible = 1;
-
-                        source->render();
-                }
-
-                MF->Render();
-                MF->addView(IJ);
-                MF->clear();
-                MF->Render();
-                system("clear");
-                MF->Display();
-
-                //sleep(1);
-                ch = getchar();
-                string V = "Last char:" + to_string(ch);
-
-                IJ->clear();
-                IJ->add_Horizon(V, 23, 5);
-                //for(int hd=0;hd<errors->Chars.size();)
-                //errors->Chars[hd]->Char=' ';
-                if ((int)ch == (int)27)
-                { //terminate or come out of raw mode on "~" pressed
-                        system("stty cooked");
-                        //while(1);//you may still run the code
-                        exit(0); //or terminate
-                }
-                else if ((int)ch == (int)92)
-                {
-                        if (IKD->current_index == 2)
-                        {
-                                addsrc->Visible = 0;
-                                source->current_index = 0;
-                        }
-                }
-                else if (((int)ch == (int)Left) && (Lock == 0))
-                {
-                        if (IKD->current_index == 0)
-                        {
-                                errors->add_Horizon("<-Max index", 15, 6);
-                        }
-                        else
-                        {
-                                IKD->current_index--;
-                                IKD->render();
-                        }
-                }
-                else if ((int)ch == (int)13)
-                {
-                        if (buildtype->ischoosing == 1)
-                        {
-                                buildtype->ischoosing = 0;
-                                buildtype->render();
-                                Lock = -1;
-                                gpp->current_index = 1;
-                        }
-                        if ((source->current_index == 0) && (IKD->current_index == 2))
-                        {
-                                addsrc->Visible = 1;
-                                addsrc->render();
-                                source->current_index = -1;
-                        }
-                        else if (buildtype->Visible == 1 && gpp->current_index == -1)
-                        {
-                                buildtype->ischoosing = 1;
-                        }
-                        else if (buildtype->Visible == 0 && gpp->current_index == -1)
-                        {
-                                buildtype->ischoosing = 0;
-                        }
-                        else if ((addsrc->current_index == 2) && (addsrc->Visible == 1))
-                        {
-                                //pathFiles->_Value+' ';
-                                //ObjName->_Value+' ';
-                        }
-                        else
-                        {
-                                if (Lock == 1)
-                                        Lock = 0;
-                                else if (Lock == 0)
-                                        Lock = 1;
-                                buffer = "";
-                        }
-                        if (Lock == -1)
-                        {
-                                Lock = 0;
-                        }
-                }
-                else if ((int)ch == (int)19)
-                {
-                        MF->Save(Fname);
-                }
-                else if (((int)ch == (int)Down) && (Lock == 0))
-                {
-                        if (IKD->current_index == 0)
-                        {
-                                if (!(Config->current_index >= Config->Values.size() - 1))
-                                        Config->current_index++;
-                        }
-                        else if (IKD->current_index == 1)
-                        {
-                                if (gpp->current_index == 0)
+                                if (buildtype->ischoosing == 1)
                                 {
-                                        gpp->current_index = -1;
-                                        buildtype->isOn = 1;
+                                        buildtype->ischoosing = 0;
                                         buildtype->render();
+                                        Lock = -1;
+                                        gpp->current_index = 1;
                                 }
-                                else if (buildtype->ischoosing == 1)
+                                if ((source->current_index == 0) && (IKD->current_index == 2))
                                 {
-                                        if ((buildtype->current_index > 0))
+                                        addsrc->Visible = 1;
+                                        addsrc->render();
+                                        source->current_index = -1;
+                                }
+                                else if (buildtype->Visible == 1 && gpp->current_index == -1)
+                                {
+                                        buildtype->ischoosing = 1;
+                                }
+                                else if (buildtype->Visible == 0 && gpp->current_index == -1)
+                                {
+                                        buildtype->ischoosing = 0;
+                                }
+                                else if ((addsrc->current_index == 2) && (addsrc->Visible == 1))
+                                {
+                                        //pathFiles->_Value+' ';
+                                        //ObjName->_Value+' ';
+                                }
+                                else if (IKD->current_index == 3)
+                                {
+                                }
+                                else
+                                {
+                                        if (Lock == 1)
+                                                Lock = 0;
+                                        else if (Lock == 0)
+                                                Lock = 1;
+                                        buffer = "";
+                                }
+                                if (Lock == -1)
+                                {
+                                        Lock = 0;
+                                }
+                        }
+                        else if ((int)ch == (int)19)
+                        {
+                                MF->Save(Fname);
+                        }
+                        else if (((int)ch == (int)Down) && (Lock == 0))
+                        {
+                                if (IKD->current_index == 0)
+                                {
+                                        if (Config->current_index == -1)
                                         {
-                                                buildtype->current_index--;
+                                                if (!(addobj->current_index >= addobj->Values.size() - 1))
+                                                        addobj->current_index++;
+                                        }
+                                        else if (!(Config->current_index >= Config->Values.size() - 1))
+                                                Config->current_index++;
+                                }
+                                else if (IKD->current_index == 1)
+                                {
+                                        if (gpp->current_index == 0)
+                                        {
+                                                gpp->current_index = -1;
+                                                buildtype->isOn = 1;
                                                 buildtype->render();
                                         }
-                                }
-                                else if (!(gpp->current_index >= gpp->Values.size() - 1))
-                                        gpp->current_index++;
-                        }
-                        else if (IKD->current_index == 2)
-                        {
-                                if ((addsrc->Visible == 1))
-                                {
-                                        if (!(addsrc->current_index >= addsrc->Values.size() - 1))
-                                                addsrc->current_index++;
-                                }
-                                else if (!(source->current_index >= source->Values.size() - 1))
-                                        source->current_index++;
-                        }
-                }
-                else if (((int)ch == (int)UP) && (Lock == 0))
-                {
-                        if (IKD->current_index == 0)
-                        {
-                                if ((Config->current_index > 0))
-                                        Config->current_index--;
-                        }
-                        if (IKD->current_index == 1)
-                        {
-                                if ((gpp->current_index > 0))
-                                        gpp->current_index--;
-                                else if (buildtype->ischoosing == 1)
-                                {
-                                        if (!(buildtype->current_index >= buildtype->EA.size() - 1))
+                                        else if (buildtype->ischoosing == 1)
                                         {
-                                                buildtype->current_index++;
-                                                buildtype->render();
+                                                if ((buildtype->current_index > 0))
+                                                {
+                                                        buildtype->current_index--;
+                                                        buildtype->render();
+                                                }
+                                        }
+                                        else if (!(gpp->current_index >= gpp->Values.size() - 1))
+                                                gpp->current_index++;
+                                }
+                                else if (IKD->current_index == 2)
+                                {
+                                        if ((addsrc->Visible == 1))
+                                        {
+                                                if (!(addsrc->current_index >= addsrc->Values.size() - 1))
+                                                        addsrc->current_index++;
+                                        }
+                                        else if (!(source->current_index >= source->Values.size() - 1))
+                                                source->current_index++;
+                                }
+                                else if (IKD->current_index == 3)
+                                {
+                                        if (CompileBuild->ischoosing == 1)
+                                        {
+                                                if ((CompileBuild->current_index > 0))
+                                                {
+                                                        CompileBuild->current_index--;
+                                                        CompileBuild->render();
+                                                }
                                         }
                                 }
-                                else if (!(gpp->current_index >= 0))
+                        }
+                        else if (((int)ch == (int)UP) && (Lock == 0))
+                        {
+                                if (IKD->current_index == 0)
                                 {
-                                        gpp->current_index++;
+                                        if (Config->current_index == -1)
+                                        {
+                                                if ((addobj->current_index > 0))
+                                                        addobj->current_index--;
+                                        }
+                                        else if ((Config->current_index > 0))
+                                                Config->current_index--;
+                                }
+                                if (IKD->current_index == 1)
+                                {
+                                        if ((gpp->current_index > 0))
+                                                gpp->current_index--;
+                                        else if (buildtype->ischoosing == 1)
+                                        {
+                                                if (!(buildtype->current_index >= buildtype->EA.size() - 1))
+                                                {
+                                                        buildtype->current_index++;
+                                                        buildtype->render();
+                                                }
+                                        }
+                                        else if (!(gpp->current_index >= 0))
+                                        {
+                                                gpp->current_index++;
+                                        }
+                                }
+                                if (IKD->current_index == 2)
+                                {
+                                        if (addsrc->Visible == 1)
+                                        {
+                                                if ((addsrc->current_index > 0))
+                                                        addsrc->current_index--;
+                                        }
+                                        else if ((source->current_index > 0))
+                                                source->current_index--;
+                                }
+                                else if (IKD->current_index == 3)
+                                {
+                                        if (CompileBuild->ischoosing == 1)
+                                        {
+                                                if (!(CompileBuild->current_index >= CompileBuild->EA.size() - 1))
+                                                {
+                                                        CompileBuild->current_index++;
+                                                        CompileBuild->render();
+                                                }
+                                        }
                                 }
                         }
-                        if (IKD->current_index == 2)
+                        else if (((int)ch == (int)100) && (Lock == 0))
                         {
-                                if (addsrc->Visible == 1)
+                                if (IKD->current_index == Ch.size() - 1)
                                 {
-                                        if ((addsrc->current_index > 0))
-                                                addsrc->current_index--;
+                                        errors->add_Horizon("Max index->", 15, 6);
                                 }
-                                else if ((source->current_index > 0))
-                                        source->current_index--;
+                                else
+                                {
+                                        IKD->current_index++;
+                                        IKD->render();
+                                }
                         }
-                }
-                else if (((int)ch == (int)100) && (Lock == 0))
-                {
-                        if (IKD->current_index == Ch.size() - 1)
+                        else if ((int)ch == (int)127)
                         {
-                                errors->add_Horizon("Max index->", 15, 6);
+                                if (LargeBuffer.length() >= 1)
+                                {
+                                        LargeBuffer.pop_back();
+                                }
+                                if (buffer.length() >= 1)
+                                        buffer.pop_back();
                         }
                         else
                         {
-                                IKD->current_index++;
-                                IKD->render();
+                                buffer.push_back(ch);
                         }
-                }
-                else if ((int)ch == (int)127)
-                {
-                        if (LargeBuffer.length() >= 1)
-                        {
-                                LargeBuffer.pop_back();
-                        }
-                        if (buffer.length() >= 1)
-                                buffer.pop_back();
-                }
-                else
-                {
-                        buffer.push_back(ch);
-                }
 
-                MF->RemoveView(IJ);
-                I->add_Horizon(buffer, y, x);
+                        MF->RemoveView(IJ);
+                        I->add_Horizon(buffer, y, x);
+                }
         }
 }

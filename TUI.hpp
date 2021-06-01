@@ -42,7 +42,7 @@ protected:
     };
 
 public:
-    bool Visible=1;
+    bool Visible = 1;
     View();
     string SaveAll();
     void clear();
@@ -57,7 +57,7 @@ private:
 class MSTS
 {
 public:
-    MSTS(string Key, string Value,string alias);
+    MSTS(string Key, string Value, string alias);
     string Save();
     string Alias;
     string _Key;
@@ -86,24 +86,36 @@ public:
     void render();
     string SaveAll();
     void add_MSTS(MSTS *, int);
-    
 };
-class dropdownlist:public View{
+class dropdownlist : public View
+{
 protected:
-    
     int x;
     int y;
+
 public:
-bool isOn=0;
-bool ischoosing=0;
+    bool isOn = 0;
+    bool ischoosing = 0;
     void render();
-    dropdownlist(int,int);
+    dropdownlist(int, int);
     string Key;
     string Alias;
     int current_index = 0;
     void add_MSTS(MSTS *, int);
     string SaveAll();
-    vector<MSTS*>EA;
+    vector<MSTS *> EA;
+};
+//do not use what is bellow
+class Coll: public View{
+    protected:
+    int x;
+    int y;
+public:
+Coll(int,int);
+    void add_MSTS(MSTS *, int);
+    void render();
+    string SaveAll();
+    vector<MSTS *> EA;
 };
 class MasterView
 {
@@ -116,7 +128,7 @@ public:
     void addView(EditorView *);
     void addView(dropdownlist *);
     void RemoveView(View *);
-    void RemoveView(EditorView*);
+    void RemoveView(EditorView *);
     void RemoveView(dropdownlist *);
     void Save(string Filname);
     void Load(string Filname);

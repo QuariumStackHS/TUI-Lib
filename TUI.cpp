@@ -195,7 +195,7 @@ void MasterView::Save(string Filename)
                 Did.push_back(current);
             }
         }
-        if (good == 1)
+        if ((good == 1)&&(current[0]!=' '))
             ss << current;
     }
     myfile << ss.str();
@@ -219,7 +219,7 @@ void MasterView::clear()
 
 string MSTS::Save()
 {
-    return Alias + " = '" + _Value + "'\n";
+    return '\n'+Alias + " = '" + _Value + "'";
 }
 MSTS::MSTS(string Key, string Value, string alias)
 {
@@ -232,7 +232,8 @@ string EditorView::SaveAll()
     string Chunk = "";
     for (int i = 0; i < this->Values.size(); i++)
     {
-        if (strcmp(this->Values[i]->Alias.c_str(), "") == 0)
+        
+        if ((strcmp(this->Values[i]->Alias.c_str(), "") == 0)||(this->Values[i]->Alias[0]==' '))
         {
         }
         else
@@ -344,7 +345,7 @@ void MasterView::Load(string Filename)
         {
             if (strcmp(line.c_str(), ""))
             {
-                cout << line << endl;
+                //cout << line << endl;
 
                 //char i;
                 //cin>>i;
@@ -356,9 +357,9 @@ void MasterView::Load(string Filename)
                     int Stage = 0;
                     if (Stage == 0)
                     {
-                        if (line[i] == '=')
+                        if ((line[i] == '='))
                         {
-                            cout << "Stage 1 enclenched" << endl;
+                            //cout << "Stage 1 enclenched" << endl;
                             for (int k = i; k < line.size(); k++)
                             {
                                 if ((line[k] == '\'') && (Stage == 0))
@@ -386,14 +387,17 @@ void MasterView::Load(string Filename)
                         }
                     }
                 }
-                cout << Value << " : " << Alias << Alias.size() << endl;
-                //char k;
-                //cin>>k;
+                //cout << Value << " : " << Alias << Alias.size() << endl;
+                if(strcmp(Alias.c_str(),"")==0){
+
+                }
+                else{
+
                 for (int i = 0; i < this->DATAC.size(); i++)
                 {
                     for (int j = 0; j < this->DATAC[i]->Values.size(); j++)
                     {
-                        cout << this->DATAC[i]->Values[j]->Alias << this->DATAC[i]->Values[j]->Alias.size() << endl;
+                        //cout << this->DATAC[i]->Values[j]->Alias << this->DATAC[i]->Values[j]->Alias.size() << endl;
                         if (strcmp(this->DATAC[i]->Values[j]->Alias.c_str(), Alias.c_str()) == 0)
                         {
                             this->DATAC[i]->Values[j]->_Value = Value;
@@ -406,6 +410,7 @@ void MasterView::Load(string Filename)
                     {
                         this->DATAD[i]->current_index = stoi(Value);
                     }
+                }
                 }
             }
         }
@@ -428,7 +433,7 @@ void dropdownlist::add_MSTS(MSTS *data, int index)
 }
 string dropdownlist::SaveAll()
 {
-    return this->Alias + " = '" + to_string(this->current_index) + "'";
+    return "\n"+this->Alias + " = '" + to_string(this->current_index) + "'";
 }
 void dropdownlist::render()
 {
@@ -459,3 +464,17 @@ void dropdownlist::render()
         }
     }
 }
+Coll::Coll(int x,int y){
+this->x=x;
+this->y=y;
+}
+void Coll::add_MSTS(MSTS*I,int j){
+EA.insert(EA.begin() + j, I);
+}
+/*
+void Coll::render(){
+    for(int i=0;i<EA.size();i++){
+        string s=EA[i]->
+    }
+}
+*/

@@ -1,6 +1,9 @@
-source.cppfiles = 'main.cpp TUI.cpp '
-source.cppobj = 'main.o TUI.o '
-Config.Project = 'None'
-Config.Exe = 'None'
+
+source.cppfiles = 'main.cpp '
+source.cppobj = 'main.o '
+source.Libs = 'UI.so '
+Config.Project = 'UCP'
+Config.Exe = './LIB/Prog'
 G++.C++ = 'c++17'
+ = '0'
 Build.Type = '0'
