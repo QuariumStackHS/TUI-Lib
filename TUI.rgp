@@ -1,0 +1,10 @@
+
+source.cppfiles = 'TUI.cpp '
+source.cppobj = 'TUI.o '
+source.Libs = ''
+source.Deps = ''
+Config.Project = 'TUI LIB'
+Config.Exe = './LIB/TUI.so'
+G++.C++ = 'c++17'
+ = '0'
+Build.Type = '1'

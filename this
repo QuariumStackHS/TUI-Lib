@@ -1,7 +1,8 @@
 
 source.cppfiles = 'main.cpp '
 source.cppobj = 'main.o '
-source.Libs = 'UI.so '
+source.Libs = ''
+source.Deps = 'TUI.rgp '
 Config.Project = 'UCP'
 Config.Exe = './LIB/Prog'
 G++.C++ = 'c++17'

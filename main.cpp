@@ -65,21 +65,138 @@ int compile(MSTS *OBJ, MSTS *SRC, string cppV)
         int ret = 0;
         for (int i = 0; i < OBJs.size(); i++)
         {
-                if(strcmp(OBJs[i].c_str()," ")==1){
-                stringstream ss;
-                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i];
-                ret += system(ss.str().c_str());
-                if (ret>=1){
-                        cout<<ss.str()<<endl;
-                }
+                if (strcmp(OBJs[i].c_str(), " ") == 1)
+                {
+                        stringstream ss;
+                        ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i];
+                        ret += system(ss.str().c_str());
+                        if (ret >= 1)
+                        {
+                                cout << ss.str() << endl;
+                        }
                 }
         }
         return ret;
 }
-int link(MSTS *OBJ, MSTS *LIBS, string buildname, int buildT)
+string Get_Data(string Dependancy, string Key)
 {
+        //Alias ='Value'\n
+
+        string line;
+        ifstream myfile(Dependancy);
+        if (myfile.is_open())
+        {
+
+                while (getline(myfile, line))
+                {
+                        if (strcmp(line.c_str(), ""))
+                        {
+                                //cout << line << endl;
+
+                                //char i;
+                                //cin>>i;
+                                string Alias = "";
+                                string Value = "";
+
+                                for (int i = 0; i < line.size(); i++)
+                                {
+                                        int Stage = 0;
+                                        if (Stage == 0)
+                                        {
+                                                if ((line[i] == '='))
+                                                {
+                                                        //cout << "Stage 1 enclenched" << endl;
+                                                        for (int k = i; k < line.size(); k++)
+                                                        {
+                                                                if ((line[k] == '\'') && (Stage == 0))
+                                                                {
+                                                                        Stage++;
+                                                                }
+                                                                if (Stage == 1)
+                                                                {
+                                                                        if (line[k] != '\'')
+                                                                        {
+                                                                                Value.push_back(line[k]);
+                                                                        }
+
+                                                                        else
+                                                                        {
+                                                                                i = line.size() + 1;
+                                                                        }
+                                                                }
+                                                        }
+                                                }
+                                                else
+                                                {
+                                                        if (line[i] != ' ')
+                                                                Alias.push_back(line[i]);
+                                                }
+                                        }
+                                }
+                                //cout << Value << " : " << Alias << Alias.size() << endl;
+                                if (strcmp(Alias.c_str(), "") == 0)
+                                {
+                                }
+                                else
+                                {
+                                        if (strcmp(Alias.c_str(), Key.c_str()) == 0)
+                                        {
+                                                return Value;
+                                        }
+                                }
+                        }
+                }
+                //char fd;
+                //cin>>fd;
+                myfile.close();
+        }
+
+        else
+                cout << "Unable to Load Dependancy\"" << Dependancy << "\"" << endl;
+        return "";
+}
+int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string thisprog)
+{
+        vector<string> Dependancys;
+        string Dependancys_libs;
+        split(Deps->_Value, Dependancys, ' ');
+        for (int i = 0; i < Dependancys.size(); i++)
+        {
+                if (strcmp(Dependancys[i].c_str(), "") != 0)
+                {
+                        string exename = Get_Data(Dependancys[i], "Config.Exe");
+                        int buildtype;
+
+                        try
+                        {
+                                buildtype = stoi(Get_Data(Dependancys[i], "Build.Type"));
+
+                                string compileDepcommand = thisprog + " " + Dependancys[i] + " build";
+                                switch (buildtype)
+                                {
+                                case 0:
+                                        cout << "Dependancy \"" << Dependancys[i] << "\" as a builtype of 0" << endl;
+                                        break;
+                                case 1:
+
+                                        system(compileDepcommand.c_str());
+                                        Dependancys_libs += (" " + exename);
+                                        break;
+                                case 2:
+                                        system(compileDepcommand.c_str());
+                                        Dependancys_libs += (" " + exename);
+                                        break;
+                                default:
+                                        break;
+                                }
+                        }
+                        catch (const std::exception &e)
+                        {
+                        }
+                }
+        }
         stringstream ss;
-        ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o " << buildname;
+        ss << "g++ " << OBJ->_Value << Dependancys_libs << " " << LIBS->_Value << "-o " << buildname;
         switch (buildT)
         {
         case 0:
@@ -136,9 +253,11 @@ int main(int argc, char **argv)
         MSTS *Projectname = new MSTS("|Project name", "None", "Config.Project");
         MSTS *Exename = new MSTS("|Executable Name", "None", "Config.Exe");
         MSTS *AddLib = new MSTS("|Add Lib", "_", "");
+        MSTS *AddDependancy = new MSTS("|Add Dependancy", "_", "");
         Config->add_MSTS(Projectname, 0); // ("|Project name:"+projectname,7,5);
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
         Config->add_MSTS(AddLib, 2);
+        Config->add_MSTS(AddDependancy, 3);
         EditorView *gpp = new EditorView(7, 5);
 
         dropdownlist *buildtype = new dropdownlist(10, 5);
@@ -158,7 +277,8 @@ int main(int argc, char **argv)
 
         EditorView *addsrc = new EditorView(7, 5);
 
-        EditorView *addobj = new EditorView(10, 5);
+        EditorView *addobj = new EditorView(11, 5);
+        EditorView *addDep = new EditorView(11, 5);
 
         MSTS *pathFiles = new MSTS("|Path to Source file", "_", "");
         MSTS *ObjName = new MSTS("|Obj-Name", "_", "");
@@ -170,6 +290,10 @@ int main(int argc, char **argv)
         MSTS *SaveBtn = new MSTS("|", "Save Object", "");
         addobj->add_MSTS(Objpath, 0);
         addobj->add_MSTS(SaveBtn, 1);
+        MSTS *DepPath = new MSTS("|Path to .rgp", "_", "");
+        MSTS *DSaveBtn = new MSTS("|", "Save", "");
+        addDep->add_MSTS(DepPath, 0);
+        addDep->add_MSTS(DSaveBtn, 1);
 
         addsrc->Visible = 0;
         buildtype->Visible = 0;
@@ -177,12 +301,14 @@ int main(int argc, char **argv)
         MSTS *MSTS_Excutable = new MSTS("", "Executable", "");
         MSTS *MSTS_Shared = new MSTS("", "Shared", "");
         MSTS *MSTS_Static = new MSTS("", "Static", "");
-        MSTS *MSTS_sourcefiles = new MSTS("files", "_", "source.cppfiles");
-        MSTS *MSTS_objfiles = new MSTS("objs", "_", "source.cppobj");
-        MSTS *MSTS_objLib = new MSTS("Libs", "", "source.Libs");
+        MSTS *MSTS_sourcefiles = new MSTS("|files", "_", "source.cppfiles");
+        MSTS *MSTS_objfiles = new MSTS("|objs", "_", "source.cppobj");
+        MSTS *MSTS_objLib = new MSTS("|Libs", "", "source.Libs");
+        MSTS *MSTS_Dependancy = new MSTS("|Dependancys", "", "source.Deps");
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
+        source->add_MSTS(MSTS_Dependancy, 4);
         buildtype->Key = "|Build Type     ";
         buildtype->Alias = "Build.Type";
         buildtype->add_MSTS(MSTS_Excutable, 0);
@@ -200,6 +326,8 @@ int main(int argc, char **argv)
         CompileBuild->add_MSTS(LinkButton, 2);
         //MF->addView()
         addobj->Visible = 0;
+        addDep->Visible = 0;
+        MF->addView(addDep);
         MF->addView(addobj);
         MF->addView(CompileBuild);
         MF->addView(addsrc);
@@ -218,7 +346,7 @@ int main(int argc, char **argv)
         string LargeBuffer;
         string buffer;
         char ch;
-        
+
         int x, y = 0;
         x = 2;
         y = 2;
@@ -231,8 +359,8 @@ int main(int argc, char **argv)
         MF->addView(Roue);
         if (strcmp(command.c_str(), "build") == 0)
         {
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
-                                                link(MSTS_objfiles, MSTS_objLib, Config->Values[1]->_Value, buildtype->current_index);
+                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
         }
         else
         {
@@ -259,7 +387,7 @@ int main(int argc, char **argv)
                                 buildtype->Visible = 0;
                                 //MF->addView()
                                 //Projectname->_Value=to_string(Config->current_index);
-                                if ((Lock) && ((Config->current_index != 2) && Config->current_index != -1))
+                                if ((Lock) && (((Config->current_index != 2) && (Config->current_index != 3)) && Config->current_index >= 0))
                                 {
                                         Config->Values[Config->current_index]->_Value = buffer;
                                 }
@@ -268,6 +396,14 @@ int main(int argc, char **argv)
                                         addobj->Visible = 1;
 
                                         Config->current_index = -1;
+                                        Lock = 0;
+                                }
+                                else if ((Config->current_index == 3) && (Lock))
+                                {
+                                        addDep->Visible = 1;
+                                        //addDep->render();
+
+                                        Config->current_index = -2;
                                         Lock = 0;
                                 }
                                 else if (Config->current_index == -1)
@@ -283,15 +419,39 @@ int main(int argc, char **argv)
                                                 }
                                         }
                                 }
+                                else if (Config->current_index == -2)
+                                {
+                                        if (Lock)
+                                        {
+                                                if (addDep->current_index == 0)
+                                                        addDep->Values[addDep->current_index]->_Value = buffer;
+                                                else
+                                                {
+                                                        MSTS_Dependancy->_Value += addDep->Values[0]->_Value + ' ';
+                                                        Lock = 0;
+                                                }
+                                        }
+                                }
+                                if ((Config->current_index == -1) && (addobj->Visible == 0))
+                                {
+                                        Config->current_index = 2;
+                                }
+                                if ((Config->current_index == -2) && (addDep->Visible == 0))
+                                {
+                                        Config->current_index = 3;
+                                }
                                 gpp->clear();
                                 gpp->Visible = 0;
                                 Config->Visible = 1;
+                                addDep->render();
                                 addobj->render();
                                 Config->render();
                         }
                         //G++
                         if (IKD->current_index == 1)
                         {
+                                addDep->clear();
+                                addDep->Visible = 0;
                                 addobj->clear();
                                 addobj->Visible = 0;
                                 addsrc->clear();
@@ -378,7 +538,7 @@ int main(int argc, char **argv)
                                         case 0:
                                                 //build
                                                 compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
-                                                link(MSTS_objfiles, MSTS_objLib, Config->Values[1]->_Value, buildtype->current_index);
+                                                link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
                                                 /* code */
                                                 break;
                                         case 1:
@@ -386,7 +546,7 @@ int main(int argc, char **argv)
                                                 compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
                                                 break;
                                         case 2:
-                                                link(MSTS_objfiles, MSTS_objLib, Config->Values[1]->_Value, buildtype->current_index);
+                                                link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
                                                 //link
                                                 break;
                                         default:
@@ -419,7 +579,12 @@ int main(int argc, char **argv)
                         }
                         else if ((int)ch == (int)92)
                         {
-                                if (IKD->current_index == 2)
+                                if (IKD->current_index == 0)
+                                {
+                                        Config->current_index = 0;
+                                        addobj->Visible = 0;
+                                }
+                                else if (IKD->current_index == 2)
                                 {
                                         addsrc->Visible = 0;
                                         source->current_index = 0;
@@ -494,6 +659,11 @@ int main(int argc, char **argv)
                                                 if (!(addobj->current_index >= addobj->Values.size() - 1))
                                                         addobj->current_index++;
                                         }
+                                        else if (Config->current_index == -2)
+                                        {
+                                                if (!(addDep->current_index >= addDep->Values.size() - 1))
+                                                        addDep->current_index++;
+                                        }
                                         else if (!(Config->current_index >= Config->Values.size() - 1))
                                                 Config->current_index++;
                                 }
@@ -546,6 +716,11 @@ int main(int argc, char **argv)
                                         {
                                                 if ((addobj->current_index > 0))
                                                         addobj->current_index--;
+                                        }
+                                        else if (Config->current_index == -2)
+                                        {
+                                                if ((addDep->current_index > 0))
+                                                        addDep->current_index--;
                                         }
                                         else if ((Config->current_index > 0))
                                                 Config->current_index--;

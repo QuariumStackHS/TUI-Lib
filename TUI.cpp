@@ -252,7 +252,7 @@ void EditorView::render()
         string Data = "";
         if (this->current_index == i)
         {
-            Data = Values[i]->_Key + " : " + YELLOW + Values[i]->_Value + RESET;
+            Data = Values[i]->_Key + " : " + RED + Values[i]->_Value + RESET;
         }
         else
         {
@@ -444,7 +444,7 @@ void dropdownlist::render()
         {
             if (i == this->current_index)
             {
-                this->add_Horizon(((string)YELLOW) + this->EA[i]->_Value + RESET, x - i, y + this->Key.size());
+                this->add_Horizon(((string)RED) + this->EA[i]->_Value + RESET, x - i, y + this->Key.size());
             }
             else
             {
@@ -456,7 +456,7 @@ void dropdownlist::render()
     {
         if (isOn)
         {
-            this->add_Horizon(((string)YELLOW) + this->EA[this->current_index]->_Value + RESET, x, y + this->Key.size());
+            this->add_Horizon(((string)RED) + this->EA[this->current_index]->_Value + RESET, x, y + this->Key.size());
         }
         else
         {
