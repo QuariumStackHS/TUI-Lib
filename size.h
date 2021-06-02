@@ -1,2 +1,2 @@
-    const int MaxX=28;
+    const int MaxX=27;
     const int MaxY=70;

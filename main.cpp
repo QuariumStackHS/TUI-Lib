@@ -62,18 +62,23 @@ int compile(MSTS *OBJ, MSTS *SRC, string cppV)
         vector<string> SRCs;
         split(OBJ->_Value, OBJs, ' ');
         split(SRC->_Value, SRCs, ' ');
+        //for(int i=0;OBJ)
         int ret = 0;
         for (int i = 0; i < OBJs.size(); i++)
         {
-                if (strcmp(OBJs[i].c_str(), " ") == 1)
+                if (!((strcmp(OBJs[i].c_str(), " ") == 0)||(strcmp(OBJs[i].c_str(), "") == 0)))
                 {
                         stringstream ss;
                         ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i];
                         ret += system(ss.str().c_str());
+                         //cout << ss.str() << endl;
                         if (ret >= 1)
                         {
                                 cout << ss.str() << endl;
                         }
+                }
+                else{
+                        //cout<<"invalid"<<endl;
                 }
         }
         return ret;
@@ -196,7 +201,7 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
                 }
         }
         stringstream ss;
-        ss << "g++ " << OBJ->_Value << Dependancys_libs << " " << LIBS->_Value << "-o " << buildname;
+        ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o "<< buildname<<Dependancys_libs ;
         switch (buildT)
         {
         case 0:
@@ -212,6 +217,7 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
         default:
                 break;
         }
+        cout<<ss.str()<<endl;
         system(ss.str().c_str());
 }
 int main(int argc, char **argv)
@@ -247,9 +253,9 @@ int main(int argc, char **argv)
         Ch.push_back("Source");
         Ch.push_back("Build");
         Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit | \\ : Back ", 25, 5);
-        vign *IKD = new vign(Ch, 6, 5);
+        vign *IKD = new vign(Ch, 2, 1);
 
-        EditorView *Config = new EditorView(7, 5);
+        EditorView *Config = new EditorView(3, 1);
         MSTS *Projectname = new MSTS("|Project name", "None", "Config.Project");
         MSTS *Exename = new MSTS("|Executable Name", "None", "Config.Exe");
         MSTS *AddLib = new MSTS("|Add Lib", "_", "");
@@ -258,14 +264,14 @@ int main(int argc, char **argv)
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
         Config->add_MSTS(AddLib, 2);
         Config->add_MSTS(AddDependancy, 3);
-        EditorView *gpp = new EditorView(7, 5);
+        EditorView *gpp = new EditorView(3, 1);
 
-        dropdownlist *buildtype = new dropdownlist(10, 5);
-        dropdownlist *CompileBuild = new dropdownlist(10, 5);
+        dropdownlist *buildtype = new dropdownlist(6, 1);
+        dropdownlist *CompileBuild = new dropdownlist(6, 1);
 
         MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
         MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
-        EditorView *source = new EditorView(10, 5);
+        EditorView *source = new EditorView(6, 1);
         MSTS *sourceFiles = new MSTS("|", "main.cpp", "source.files");
         MSTS *sourceTarget = new MSTS("|Add Src file", "_", "");
         source->add_MSTS(sourceTarget, 0);
@@ -275,10 +281,10 @@ int main(int argc, char **argv)
         //IJ->add_Horizon("Ctrl+C Compile | ESC Exit |", 18, 0);
         //IJ->add_Vertical("Reltt Editor",0,2);
 
-        EditorView *addsrc = new EditorView(7, 5);
+        EditorView *addsrc = new EditorView(3, 1);
 
-        EditorView *addobj = new EditorView(11, 5);
-        EditorView *addDep = new EditorView(11, 5);
+        EditorView *addobj = new EditorView(7, 1);
+        EditorView *addDep = new EditorView(7, 1);
 
         MSTS *pathFiles = new MSTS("|Path to Source file", "_", "");
         MSTS *ObjName = new MSTS("|Obj-Name", "_", "");
@@ -301,8 +307,8 @@ int main(int argc, char **argv)
         MSTS *MSTS_Excutable = new MSTS("", "Executable", "");
         MSTS *MSTS_Shared = new MSTS("", "Shared", "");
         MSTS *MSTS_Static = new MSTS("", "Static", "");
-        MSTS *MSTS_sourcefiles = new MSTS("|files", "_", "source.cppfiles");
-        MSTS *MSTS_objfiles = new MSTS("|objs", "_", "source.cppobj");
+        MSTS *MSTS_sourcefiles = new MSTS("|files", "", "source.cppfiles");
+        MSTS *MSTS_objfiles = new MSTS("|objs", "", "source.cppobj");
         MSTS *MSTS_objLib = new MSTS("|Libs", "", "source.Libs");
         MSTS *MSTS_Dependancy = new MSTS("|Dependancys", "", "source.Deps");
         source->add_MSTS(MSTS_sourcefiles, 1);
@@ -315,8 +321,8 @@ int main(int argc, char **argv)
         buildtype->add_MSTS(MSTS_Shared, 1);
         buildtype->add_MSTS(MSTS_Static, 2);
         View *Roue = new View();
-        int Rouex = 5;
-        int Rouey = 5;
+        int Rouex = 1;
+        int Rouey = 1;
 
         MSTS *BuildButton = new MSTS("", "Build", "");
         MSTS *CompileButton = new MSTS("", "Compile", "");
@@ -357,6 +363,8 @@ int main(int argc, char **argv)
         //when on zero you can navigate in menus
         int Lock = 0;
         MF->addView(Roue);
+        //sourcebuffer;
+        //objbuffer;
         if (strcmp(command.c_str(), "build") == 0)
         {
                 compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
@@ -506,11 +514,8 @@ int main(int argc, char **argv)
                                 {
                                         if (ch == 13)
                                         {
-                                                sourcebuffer += addsrc->Values[0]->_Value + " ";
-
-                                                objbuffer += addsrc->Values[1]->_Value + " ";
-                                                MSTS_sourcefiles->_Value = sourcebuffer;
-                                                MSTS_objfiles->_Value = objbuffer;
+                                                MSTS_sourcefiles->_Value += addsrc->Values[0]->_Value + " ";
+                                                MSTS_objfiles->_Value += addsrc->Values[1]->_Value + " ";
                                                 addsrc->current_index = 0;
                                         }
                                         //cout<<objbuffer<<sourcebuffer<<endl;
