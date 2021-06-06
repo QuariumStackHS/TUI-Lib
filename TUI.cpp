@@ -195,7 +195,7 @@ void MasterView::Save(string Filename)
                 Did.push_back(current);
             }
         }
-        if ((good == 1)&&(current[0]!=' '))
+        if ((good == 1) && (current[0] != ' '))
             ss << current;
     }
     myfile << ss.str();
@@ -216,10 +216,13 @@ void MasterView::clear()
         }
     }
 }
-
+void MasterView::addView(DepTree *IN){
+this->DATAE.push_back(IN);
+Views.push_back(IN);
+}
 string MSTS::Save()
 {
-    return '\n'+Alias + " = '" + _Value + "'";
+    return '\n' + Alias + " = '" + _Value + "'";
 }
 MSTS::MSTS(string Key, string Value, string alias)
 {
@@ -232,8 +235,8 @@ string EditorView::SaveAll()
     string Chunk = "";
     for (int i = 0; i < this->Values.size(); i++)
     {
-        
-        if ((strcmp(this->Values[i]->Alias.c_str(), "") == 0)||(this->Values[i]->Alias[0]==' '))
+
+        if ((strcmp(this->Values[i]->Alias.c_str(), "") == 0) || (this->Values[i]->Alias[0] == ' '))
         {
         }
         else
@@ -388,29 +391,30 @@ void MasterView::Load(string Filename)
                     }
                 }
                 //cout << Value << " : " << Alias << Alias.size() << endl;
-                if(strcmp(Alias.c_str(),"")==0){
-
-                }
-                else{
-
-                for (int i = 0; i < this->DATAC.size(); i++)
+                if (strcmp(Alias.c_str(), "") == 0)
                 {
-                    for (int j = 0; j < this->DATAC[i]->Values.size(); j++)
+                }
+                else
+                {
+
+                    for (int i = 0; i < this->DATAC.size(); i++)
                     {
-                        //cout << this->DATAC[i]->Values[j]->Alias << this->DATAC[i]->Values[j]->Alias.size() << endl;
-                        if (strcmp(this->DATAC[i]->Values[j]->Alias.c_str(), Alias.c_str()) == 0)
+                        for (int j = 0; j < this->DATAC[i]->Values.size(); j++)
                         {
-                            this->DATAC[i]->Values[j]->_Value = Value;
+                            //cout << this->DATAC[i]->Values[j]->Alias << this->DATAC[i]->Values[j]->Alias.size() << endl;
+                            if (strcmp(this->DATAC[i]->Values[j]->Alias.c_str(), Alias.c_str()) == 0)
+                            {
+                                this->DATAC[i]->Values[j]->_Value = Value;
+                            }
                         }
                     }
-                }
-                for (int i = 0; i < this->DATAD.size(); i++)
-                {
-                    if (strcmp(this->DATAD[i]->Alias.c_str(), Alias.c_str()) == 0)
+                    for (int i = 0; i < this->DATAD.size(); i++)
                     {
-                        this->DATAD[i]->current_index = stoi(Value);
+                        if (strcmp(this->DATAD[i]->Alias.c_str(), Alias.c_str()) == 0)
+                        {
+                            this->DATAD[i]->current_index = stoi(Value);
+                        }
                     }
-                }
                 }
             }
         }
@@ -433,7 +437,7 @@ void dropdownlist::add_MSTS(MSTS *data, int index)
 }
 string dropdownlist::SaveAll()
 {
-    return "\n"+this->Alias + " = '" + to_string(this->current_index) + "'";
+    return "\n" + this->Alias + " = '" + to_string(this->current_index) + "'";
 }
 void dropdownlist::render()
 {
@@ -464,12 +468,14 @@ void dropdownlist::render()
         }
     }
 }
-Coll::Coll(int x,int y){
-this->x=x;
-this->y=y;
+Coll::Coll(int x, int y)
+{
+    this->x = x;
+    this->y = y;
 }
-void Coll::add_MSTS(MSTS*I,int j){
-EA.insert(EA.begin() + j, I);
+void Coll::add_MSTS(MSTS *I, int j)
+{
+    EA.insert(EA.begin() + j, I);
 }
 /*
 void Coll::render(){
@@ -478,3 +484,31 @@ void Coll::render(){
     }
 }
 */
+void DepTree::render()
+{
+    this->add_Horizon(this->name,3,14);
+    for (int i = 0; i < this->Childs.size(); i++)
+    {
+        Childs[i]->ChildRender(this, 5,i+1);
+        this->add_Horizon("/",4,(i+1)*10);
+    }
+}
+void DepTree::ChildRender(DepTree *This, int Level,int right)
+{
+    This->add_Horizon(this->name,Level,right*10);
+    Level++;
+    for (int i = 0; i < this->Childs.size(); i++)
+    {
+        Childs[i]->ChildRender(This, Level+1,i+right);
+        This->add_Horizon("\\",Level,(i+right)*10);
+    }
+}
+int DepTree::AddChild(DepTree *IN)
+{
+    this->Childs.push_back(IN);
+}
+DepTree::DepTree(int X, int Y)
+{
+    this->x = X;
+    this->y = Y;
+}

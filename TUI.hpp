@@ -117,6 +117,20 @@ Coll(int,int);
     string SaveAll();
     vector<MSTS *> EA;
 };
+class DepTree:public View{
+public:
+        int x;
+        int y;
+        string name;
+        string fileCFG;
+        vector<DepTree*>Childs;
+        DepTree(int,int);
+        int AddChild(DepTree*);
+        void render();
+        void ChildRender(DepTree*Master,int level,int right);
+        
+};
+
 class MasterView
 {
 public:
@@ -127,6 +141,7 @@ public:
     void addView(View *);
     void addView(EditorView *);
     void addView(dropdownlist *);
+    void addView(DepTree *);
     void RemoveView(View *);
     void RemoveView(EditorView *);
     void RemoveView(dropdownlist *);
@@ -138,6 +153,7 @@ protected:
     vector<View *> Views;
     vector<EditorView *> DATAC;
     vector<dropdownlist *> DATAD;
+    vector<DepTree *> DATAE;
     int MAXx;
     int MAXy;
 };

@@ -66,18 +66,19 @@ int compile(MSTS *OBJ, MSTS *SRC, string cppV)
         int ret = 0;
         for (int i = 0; i < OBJs.size(); i++)
         {
-                if (!((strcmp(OBJs[i].c_str(), " ") == 0)||(strcmp(OBJs[i].c_str(), "") == 0)))
+                if (!((strcmp(OBJs[i].c_str(), " ") == 0) || (strcmp(OBJs[i].c_str(), "") == 0)))
                 {
                         stringstream ss;
                         ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i];
                         ret += system(ss.str().c_str());
-                         //cout << ss.str() << endl;
+                        //cout << ss.str() << endl;
                         if (ret >= 1)
                         {
                                 cout << ss.str() << endl;
                         }
                 }
-                else{
+                else
+                {
                         //cout<<"invalid"<<endl;
                 }
         }
@@ -160,6 +161,7 @@ string Get_Data(string Dependancy, string Key)
                 cout << "Unable to Load Dependancy\"" << Dependancy << "\"" << endl;
         return "";
 }
+
 int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string thisprog)
 {
         vector<string> Dependancys;
@@ -201,7 +203,7 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
                 }
         }
         stringstream ss;
-        ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o "<< buildname<<Dependancys_libs ;
+        ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o " << buildname << Dependancys_libs;
         switch (buildT)
         {
         case 0:
@@ -217,8 +219,36 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
         default:
                 break;
         }
-        cout<<ss.str()<<endl;
+        cout << ss.str() << endl;
         system(ss.str().c_str());
+}
+
+DepTree *buildTree(string RGPFILE)
+{
+        vector<string> Dependancys;
+        DepTree *MasterNode = new DepTree(5, 5);
+        // cout<<Deps->_Value<<endl;
+        cout<<RGPFILE<<endl;
+        MasterNode->name = RGPFILE;
+        vector<string> Dependancys_of_this;
+        split(Get_Data(RGPFILE, "source.Deps"), Dependancys, ' ');
+        for (int i = 0; i < Dependancys.size(); i++)
+        {
+                cout<<Dependancys[i]<<endl;
+                if (strcmp(Dependancys[i].c_str(), "") != 0)
+                {
+                        
+                        string exename = Get_Data(Dependancys[i], "Config.Exe");
+                        cout<<"c"<<exename<<endl;
+                        //deps->name=exename;
+                        //split(Get_Data(Dependancys[i], "source.Deps"), Dependancys_of_this, ' ');
+                                        DepTree *k = buildTree(Dependancys[i]);
+                                        MasterNode->AddChild(k);
+                }
+        }
+        MasterNode->Visible=1;
+
+        return MasterNode;
 }
 int main(int argc, char **argv)
 {
@@ -252,6 +282,7 @@ int main(int argc, char **argv)
         Ch.push_back("G++");
         Ch.push_back("Source");
         Ch.push_back("Build");
+        Ch.push_back("Deps");
         Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit | \\ : Back ", 25, 5);
         vign *IKD = new vign(Ch, 2, 1);
 
@@ -333,6 +364,7 @@ int main(int argc, char **argv)
         //MF->addView()
         addobj->Visible = 0;
         addDep->Visible = 0;
+        DepTree *Project = buildTree(argv[1]);
         MF->addView(addDep);
         MF->addView(addobj);
         MF->addView(CompileBuild);
@@ -345,6 +377,7 @@ int main(int argc, char **argv)
         MF->addView(Config);
         MF->addView(gpp);
         MF->addView(buildtype);
+
         MF->Load(Fname);
         Config->Visible = 0;
 
@@ -365,6 +398,7 @@ int main(int argc, char **argv)
         MF->addView(Roue);
         //sourcebuffer;
         //objbuffer;
+
         if (strcmp(command.c_str(), "build") == 0)
         {
                 compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
@@ -528,6 +562,8 @@ int main(int argc, char **argv)
                         //build
                         else if ((IKD->current_index == 3))
                         {
+                                Project->Visible=0;
+                                Project->clear();
                                 addsrc->Visible = 0;
                                 addsrc->clear();
                                 source->Visible = 0;
@@ -559,6 +595,17 @@ int main(int argc, char **argv)
                                         }
                                 }
                                 CompileBuild->render();
+                        }
+                        else if (IKD->current_index == 4)
+                        {
+                                CompileBuild->Visible = 0;
+                                CompileBuild->clear();
+                
+                Project->Visible=1;
+                Project->render();
+
+        MF->addView(Project);
+
                         }
 
                         MF->Render();

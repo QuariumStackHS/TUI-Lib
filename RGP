@@ -1,0 +1,10 @@
+
+source.cppfiles = 'main.cpp TUI.cpp '
+source.cppobj = 'main.o TUI.o '
+source.Libs = ''
+source.Deps = ''
+Config.Project = 'RGP'
+Config.Exe = 'LIB/RGP'
+G++.C++ = 'c++17'
+ = '0'
+Build.Type = '0'

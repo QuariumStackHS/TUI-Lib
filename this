@@ -2,7 +2,7 @@
 source.cppfiles = 'main.cpp '
 source.cppobj = 'main.o '
 source.Libs = ''
-source.Deps = 'TUI.rgp '
+source.Deps = 'TUI.rgp null.rgp'
 Config.Project = 'UCP'
 Config.Exe = './LIB/Prog'
 G++.C++ = 'c++17'
