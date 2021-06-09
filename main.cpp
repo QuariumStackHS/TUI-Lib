@@ -1,5 +1,5 @@
-#include "TUI.hpp"
-#include "Keys.h"
+#include <TUI.hpp>
+#include <Keys.h>
 
 #include <stdio.h>
 #include <sstream>
@@ -56,20 +56,22 @@ char getch()
 
 */
 
-int compile(MSTS *OBJ, MSTS *SRC,MSTS* INCl, string cppV)
+int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV)
 {
         vector<string> OBJs;
         vector<string> SRCs;
         vector<string> IN;
-        split(INCl->_Value,IN,' ');
+        split(INCl->_Value, IN, ' ');
         split(OBJ->_Value, OBJs, ' ');
         split(SRC->_Value, SRCs, ' ');
         //for(int i=0;OBJ)
         string includestring;
         int ret = 0;
-        for(int i =0;i<IN.size();i++){
-                if(!((strcmp(IN[i].c_str(), " ") == 0) || (strcmp(IN[i].c_str(), "") == 0))){
-                        includestring+=" -I"+IN[i];
+        for (int i = 0; i < IN.size(); i++)
+        {
+                if (!((strcmp(IN[i].c_str(), " ") == 0) || (strcmp(IN[i].c_str(), "") == 0)))
+                {
+                        includestring += " -I" + IN[i];
                 }
         }
         for (int i = 0; i < OBJs.size(); i++)
@@ -77,12 +79,11 @@ int compile(MSTS *OBJ, MSTS *SRC,MSTS* INCl, string cppV)
                 if (!((strcmp(OBJs[i].c_str(), " ") == 0) || (strcmp(OBJs[i].c_str(), "") == 0)))
                 {
                         stringstream ss;
-                        ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i]<<includestring;
+                        ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring;
                         ret += system(ss.str().c_str());
                         //cout << ss.str() << endl;
 
-                                cout << ss.str() << endl;
-                        
+                        cout << ss.str() << endl;
                 }
                 else
                 {
@@ -237,9 +238,9 @@ DepTree *buildTree(string RGPFILE)
         DepTree *MasterNode = new DepTree(5, 5);
         // cout<<Deps->_Value<<endl;
         //cout<<RGPFILE<<endl;
-        vector<string>Fullpath;
-        split(Get_Data(RGPFILE, "Config.Exe"),Fullpath,'/');
-        MasterNode->name = Fullpath[Fullpath.size()-1];
+        vector<string> Fullpath;
+        split(Get_Data(RGPFILE, "Config.Exe"), Fullpath, '/');
+        MasterNode->name = Fullpath[Fullpath.size() - 1];
         vector<string> Dependancys_of_this;
         split(Get_Data(RGPFILE, "source.Deps"), Dependancys, ' ');
         for (int i = 0; i < Dependancys.size(); i++)
@@ -247,16 +248,16 @@ DepTree *buildTree(string RGPFILE)
                 //cout<<Dependancys[i]<<endl;
                 if (strcmp(Dependancys[i].c_str(), "") != 0)
                 {
-                        
+
                         string exename = Get_Data(Dependancys[i], "Config.Exe");
                         //cout<<"c"<<exename<<endl;
                         //deps->name=exename;
                         //split(Get_Data(Dependancys[i], "source.Deps"), Dependancys_of_this, ' ');
-                                        DepTree *k = buildTree(Dependancys[i]);
-                                        MasterNode->AddChild(k);
+                        DepTree *k = buildTree(Dependancys[i]);
+                        MasterNode->AddChild(k);
                 }
         }
-        MasterNode->Visible=1;
+        MasterNode->Visible = 1;
 
         return MasterNode;
 }
@@ -307,7 +308,7 @@ int main(int argc, char **argv)
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
         Config->add_MSTS(AddLib, 2);
         Config->add_MSTS(AddDependancy, 3);
-        Config->add_MSTS(AddInclude,4);
+        Config->add_MSTS(AddInclude, 4);
         EditorView *gpp = new EditorView(3, 1);
 
         dropdownlist *buildtype = new dropdownlist(6, 1);
@@ -364,14 +365,25 @@ int main(int argc, char **argv)
         MSTS *MSTS_Dependancy = new MSTS("|Dependancys", "", "source.Deps");
         MSTS *MSTS_Includes = new MSTS("|includes", "", "source.includes");
 
-        MSTS *MSTS_Git = new MSTS("|includes", "", "git.usr");
+        MSTS *MSTS_Git_Commit = new MSTS("|Commit", "_", "");
+        EditorView *Git_Commit = new EditorView(9, 1);
+        MSTS *MSTS_Git_Push = new MSTS("|Push", "_", "");
+        EditorView *Git_Push = new EditorView(9, 1);
+        MSTS *MSTS_Git_Fetch = new MSTS("|Fetch", "_", "");
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
         source->add_MSTS(MSTS_Dependancy, 4);
-        source->add_MSTS(MSTS_Includes,5);
+        source->add_MSTS(MSTS_Includes, 5);
 
-        Git->add_MSTS()
+        MSTS *CommitMSG = new MSTS("Commit MSG", "_", "");
+        MSTS *CommitButton = new MSTS("~", "Commit!", "");
+        Git_Commit->add_MSTS(CommitMSG, 0);
+        Git_Commit->add_MSTS(CommitButton, 1);
+
+        Git->add_MSTS(MSTS_Git_Commit, 0);
+        Git->add_MSTS(MSTS_Git_Push, 1);
+        Git->add_MSTS(MSTS_Git_Fetch, 2);
 
         buildtype->Key = "|Build Type     ";
         buildtype->Alias = "Build.Type";
@@ -393,6 +405,8 @@ int main(int argc, char **argv)
         addinc->Visible = 0;
         addDep->Visible = 0;
         DepTree *Project = buildTree(argv[1]);
+        MF->addView(Git_Commit);
+        MF->addView(Git);
         MF->addView(addDep);
         MF->addView(addobj);
         MF->addView(CompileBuild);
@@ -430,7 +444,7 @@ int main(int argc, char **argv)
 
         if (strcmp(command.c_str(), "build") == 0)
         {
-                compile(MSTS_objfiles, MSTS_sourcefiles,MSTS_Includes, gpp->Values[0]->_Value);
+                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value);
                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
         }
         else
@@ -458,7 +472,7 @@ int main(int argc, char **argv)
                                 buildtype->Visible = 0;
                                 //MF->addView()
                                 //Projectname->_Value=to_string(Config->current_index);
-                                if ((Lock) && (((Config->current_index != 2) && (Config->current_index != 3)&& (Config->current_index != 4)) && Config->current_index >= 0))
+                                if ((Lock) && (((Config->current_index != 2) && (Config->current_index != 3) && (Config->current_index != 4)) && Config->current_index >= 0))
                                 {
                                         Config->Values[Config->current_index]->_Value = buffer;
                                 }
@@ -617,7 +631,7 @@ int main(int argc, char **argv)
                         //build
                         else if ((IKD->current_index == 3))
                         {
-                                Project->Visible=0;
+                                Project->Visible = 0;
                                 Project->clear();
                                 addsrc->Visible = 0;
                                 addsrc->clear();
@@ -633,13 +647,13 @@ int main(int argc, char **argv)
                                         {
                                         case 0:
                                                 //build
-                                                compile(MSTS_objfiles, MSTS_sourcefiles,MSTS_Includes, gpp->Values[0]->_Value);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value);
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
                                                 /* code */
                                                 break;
                                         case 1:
                                                 //compile
-                                                compile(MSTS_objfiles, MSTS_sourcefiles,MSTS_Includes, gpp->Values[0]->_Value);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value);
                                                 break;
                                         case 2:
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
@@ -648,6 +662,7 @@ int main(int argc, char **argv)
                                         default:
                                                 break;
                                         }
+                                        Lock = 0;
                                 }
                                 CompileBuild->render();
                         }
@@ -655,15 +670,34 @@ int main(int argc, char **argv)
                         {
                                 CompileBuild->Visible = 0;
                                 CompileBuild->clear();
-                
-                Project->Visible=1;
-                Project->render();
 
-        MF->addView(Project);
+                                Project->Visible = 1;
+                                Project->render();
+                                Git->Visible = 0;
+                                Git->clear();
 
+                                MF->addView(Project);
                         }
-                        else if(IKD->current_index==5){
-
+                        else if (IKD->current_index == 5)
+                        {
+                                Project->Visible = 0;
+                                Git->Visible = 1;
+                                Git->render();
+                                if (Git_Commit->Visible == 1 && Lock == 1)
+                                {
+                                        if (Git_Commit->current_index == 1)
+                                        {
+                                                string cmd = "git commit -a -m \"";
+                                                cmd += Git_Commit->Values[0]->_Value + "\"";
+                                                buffer = "";
+                                                system(cmd.c_str());
+                                        }
+                                        else
+                                        {
+                                                Git_Commit->Values[0]->_Value = buffer;
+                                        }
+                                        Git_Commit->render();
+                                }
                         }
 
                         MF->Render();
@@ -691,17 +725,17 @@ int main(int argc, char **argv)
                         {
                                 if (IKD->current_index == 0)
                                 {
-                                         
-                                        if(Config->current_index==-1)
-                                        Config->current_index = 2;
-                                        else if(Config->current_index==-2)
-                                        Config->current_index = 3;
-                                        else if(Config->current_index==-3)
-                                        Config->current_index = 4;
 
-                                        addinc->Visible=0;
+                                        if (Config->current_index == -1)
+                                                Config->current_index = 2;
+                                        else if (Config->current_index == -2)
+                                                Config->current_index = 3;
+                                        else if (Config->current_index == -3)
+                                                Config->current_index = 4;
+
+                                        addinc->Visible = 0;
                                         addobj->Visible = 0;
-                                        addDep->Visible=0;
+                                        addDep->Visible = 0;
                                 }
                                 else if (IKD->current_index == 2)
                                 {
@@ -723,6 +757,27 @@ int main(int argc, char **argv)
                         }
                         else if ((int)ch == (int)13)
                         {
+
+                                if (Git->Visible == 1 && Git->current_index >= 0)
+                                {
+                                        switch (Git->current_index)
+                                        {
+                                        case 0:
+                                                Git->current_index = -1;
+                                                Git_Commit->Visible = 1;
+
+                                                break;
+                                        case 1:
+
+                                                break;
+                                        case 2:
+
+                                                break;
+
+                                        default:
+                                                break;
+                                        }
+                                }
                                 if (buildtype->ischoosing == 1)
                                 {
                                         buildtype->ischoosing = 0;
@@ -749,8 +804,9 @@ int main(int argc, char **argv)
                                         //pathFiles->_Value+' ';
                                         //ObjName->_Value+' ';
                                 }
-                                else if(addsrc->current_index==0&&Lock==0){
-                                        Lock=1;
+                                else if (addsrc->current_index == 0 && Lock == 0)
+                                {
+                                        Lock = 1;
                                 }
                                 else if (IKD->current_index == 3)
                                 {
@@ -786,7 +842,8 @@ int main(int argc, char **argv)
                                                 if (!(addDep->current_index >= addDep->Values.size() - 1))
                                                         addDep->current_index++;
                                         }
-                                        else if(Config->current_index == -3){
+                                        else if (Config->current_index == -3)
+                                        {
                                                 if (!(addinc->current_index >= addinc->Values.size() - 1))
                                                         addinc->current_index++;
                                         }
@@ -830,6 +887,23 @@ int main(int argc, char **argv)
                                                 {
                                                         CompileBuild->current_index--;
                                                         CompileBuild->render();
+                                                }
+                                        }
+                                }
+                                else if (IKD->current_index == 5)
+                                {
+                                        if (Git_Commit->Visible)
+                                        {
+                                                if (Git_Commit->current_index < Git_Commit->Values.size())
+                                                        Git_Commit->current_index++;
+                                        }
+                                        if (Git->Visible == 1)
+                                        {
+                                                if ((Git->current_index < Git->Values.size() - 1))
+                                                {
+                                                        Git->current_index++;
+
+                                                        Git->render();
                                                 }
                                         }
                                 }
@@ -892,6 +966,21 @@ int main(int argc, char **argv)
                                                         CompileBuild->current_index++;
                                                         CompileBuild->render();
                                                 }
+                                        }
+                                }
+                                else if (IKD->current_index == 5)
+                                {
+                                        if (Git_Commit->Visible)
+                                        {
+                                                if (Git_Commit->current_index > 0)
+                                                {
+                                                        Git_Commit->current_index--;
+                                                }
+                                        }
+                                        if (Git->Visible = 1)
+                                        {
+                                                if (Git->current_index > 0)
+                                                        Git->current_index--;
                                         }
                                 }
                         }
