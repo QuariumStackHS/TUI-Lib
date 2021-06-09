@@ -692,7 +692,10 @@ int main(int argc, char **argv)
                                                 cmd += Git_Commit->Values[0]->_Value + "\"";
                                                 buffer = "";
                                                 system(cmd.c_str());
-                                                                                           Lock=0;
+                                                cout<<cmd<<endl;
+                                                char i;
+                                                cin>>i;
+                                                Lock=0;
                                                 Git_Commit->Visible=0;
                                                 Git->current_index=0;
                                         }
