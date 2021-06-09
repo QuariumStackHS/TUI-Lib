@@ -1,3 +1,10 @@
+/*
+
+@author QuariumStackHS
+
+this is an exemple of what you can do using TUI.hpp and TUI.cpp in this Repository
+
+*/
 #include <TUI.hpp>
 #include <Keys.h>
 
@@ -317,7 +324,7 @@ int main(int argc, char **argv)
         MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
         MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
         EditorView *source = new EditorView(6, 1);
-        EditorView *Git = new EditorView(6, 1);
+        EditorView *Git = new EditorView(3, 1);
         MSTS *sourceFiles = new MSTS("|", "main.cpp", "source.files");
         MSTS *sourceTarget = new MSTS("|Add Src file", "_", "");
         source->add_MSTS(sourceTarget, 0);
@@ -366,9 +373,9 @@ int main(int argc, char **argv)
         MSTS *MSTS_Includes = new MSTS("|includes", "", "source.includes");
 
         MSTS *MSTS_Git_Commit = new MSTS("|Commit", "_", "");
-        EditorView *Git_Commit = new EditorView(9, 1);
+        EditorView *Git_Commit = new EditorView(7, 1);
         MSTS *MSTS_Git_Push = new MSTS("|Push", "_", "");
-        EditorView *Git_Push = new EditorView(9, 1);
+        //EditorView *Git_Push = new EditorView(9, 1);
         MSTS *MSTS_Git_Fetch = new MSTS("|Fetch", "_", "");
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
@@ -767,7 +774,15 @@ int main(int argc, char **argv)
                         else if ((int)ch == (int)13)
                         {
 
-                                if (Git->Visible == 1 && Git->current_index >= 0)
+
+                                if (buildtype->ischoosing == 1)
+                                {
+                                        buildtype->ischoosing = 0;
+                                        buildtype->render();
+                                        Lock = -1;
+                                        gpp->current_index = 1;
+                                }
+                                                                if (Git->Visible == 1 && Git->current_index >= 0)
                                 {
                                         switch (Git->current_index)
                                         {
@@ -777,24 +792,17 @@ int main(int argc, char **argv)
 
                                                 break;
                                         case 1:
-
+                                                system("git push --all");
                                                 break;
                                         case 2:
-
+                                                system("git fetch --all");
                                                 break;
 
                                         default:
                                                 break;
                                         }
                                 }
-                                if (buildtype->ischoosing == 1)
-                                {
-                                        buildtype->ischoosing = 0;
-                                        buildtype->render();
-                                        Lock = -1;
-                                        gpp->current_index = 1;
-                                }
-                                if ((source->current_index == 0) && (IKD->current_index == 2))
+                                else if ((source->current_index == 0) && (IKD->current_index == 2))
                                 {
                                         addsrc->Visible = 1;
                                         addsrc->render();
