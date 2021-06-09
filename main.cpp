@@ -404,6 +404,7 @@ int main(int argc, char **argv)
         addobj->Visible = 0;
         addinc->Visible = 0;
         addDep->Visible = 0;
+        Git_Commit->Visible=0;
         DepTree *Project = buildTree(argv[1]);
         MF->addView(Git_Commit);
         MF->addView(Git);
