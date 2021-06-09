@@ -130,6 +130,24 @@ public:
         void ChildRender(DepTree*Master,int level,int right);
         
 };
+class Dynamic_Property{
+private:
+    vector<string>Props;
+public:
+    void add_Prop();
+    Dynamic_Property();
+};
+class String_S_Matrice:public View{
+    protected:
+    
+vector<Dynamic_Property>Vectors;
+public:
+    int x;
+    int y;
+    void render();
+
+    String_S_Matrice(int,int);
+};
 
 class MasterView
 {

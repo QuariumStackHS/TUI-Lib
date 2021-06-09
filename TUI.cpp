@@ -216,9 +216,10 @@ void MasterView::clear()
         }
     }
 }
-void MasterView::addView(DepTree *IN){
-this->DATAE.push_back(IN);
-Views.push_back(IN);
+void MasterView::addView(DepTree *IN)
+{
+    this->DATAE.push_back(IN);
+    Views.push_back(IN);
 }
 string MSTS::Save()
 {
@@ -302,7 +303,6 @@ EditorView::EditorView(int XX, int YY)
     this->x = XX;
     this->y = YY;
 }
-
 vign::vign(vector<string> comb, int xX, int yY)
 {
     for (int i = 0; i < comb.size(); i++)
@@ -486,21 +486,21 @@ void Coll::render(){
 */
 void DepTree::render()
 {
-    this->add_Horizon(this->name,3,14);
+    this->add_Horizon(this->name, 3, 14);
     for (int i = 0; i < this->Childs.size(); i++)
     {
-        Childs[i]->ChildRender(this, 5,i+1);
-        this->add_Horizon("/",4,(i+1)*10);
+        Childs[i]->ChildRender(this, 5, i + 1);
+        this->add_Horizon("/", 4, (i + 1) * 10);
     }
 }
-void DepTree::ChildRender(DepTree *This, int Level,int right)
+void DepTree::ChildRender(DepTree *This, int Level, int right)
 {
-    This->add_Horizon(this->name,Level,right*10);
+    This->add_Horizon(this->name, Level, right * 10);
     Level++;
     for (int i = 0; i < this->Childs.size(); i++)
     {
-        Childs[i]->ChildRender(This, Level+1,i+right);
-        This->add_Horizon("\\",Level,(i+right)*10);
+        Childs[i]->ChildRender(This, Level + 1, i + right);
+        This->add_Horizon("\\", Level, (i + right) * 10);
     }
 }
 int DepTree::AddChild(DepTree *IN)

@@ -56,26 +56,33 @@ char getch()
 
 */
 
-int compile(MSTS *OBJ, MSTS *SRC, string cppV)
+int compile(MSTS *OBJ, MSTS *SRC,MSTS* INCl, string cppV)
 {
         vector<string> OBJs;
         vector<string> SRCs;
+        vector<string> IN;
+        split(INCl->_Value,IN,' ');
         split(OBJ->_Value, OBJs, ' ');
         split(SRC->_Value, SRCs, ' ');
         //for(int i=0;OBJ)
+        string includestring;
         int ret = 0;
+        for(int i =0;i<IN.size();i++){
+                if(!((strcmp(IN[i].c_str(), " ") == 0) || (strcmp(IN[i].c_str(), "") == 0))){
+                        includestring+=" -I"+IN[i];
+                }
+        }
         for (int i = 0; i < OBJs.size(); i++)
         {
                 if (!((strcmp(OBJs[i].c_str(), " ") == 0) || (strcmp(OBJs[i].c_str(), "") == 0)))
                 {
                         stringstream ss;
-                        ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i];
+                        ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i]<<includestring;
                         ret += system(ss.str().c_str());
                         //cout << ss.str() << endl;
-                        if (ret >= 1)
-                        {
+
                                 cout << ss.str() << endl;
-                        }
+                        
                 }
                 else
                 {
@@ -219,6 +226,7 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
         default:
                 break;
         }
+        //ss<<" &>> Logs.GP";
         cout << ss.str() << endl;
         system(ss.str().c_str());
 }
@@ -228,18 +236,20 @@ DepTree *buildTree(string RGPFILE)
         vector<string> Dependancys;
         DepTree *MasterNode = new DepTree(5, 5);
         // cout<<Deps->_Value<<endl;
-        cout<<RGPFILE<<endl;
-        MasterNode->name = RGPFILE;
+        //cout<<RGPFILE<<endl;
+        vector<string>Fullpath;
+        split(Get_Data(RGPFILE, "Config.Exe"),Fullpath,'/');
+        MasterNode->name = Fullpath[Fullpath.size()-1];
         vector<string> Dependancys_of_this;
         split(Get_Data(RGPFILE, "source.Deps"), Dependancys, ' ');
         for (int i = 0; i < Dependancys.size(); i++)
         {
-                cout<<Dependancys[i]<<endl;
+                //cout<<Dependancys[i]<<endl;
                 if (strcmp(Dependancys[i].c_str(), "") != 0)
                 {
                         
                         string exename = Get_Data(Dependancys[i], "Config.Exe");
-                        cout<<"c"<<exename<<endl;
+                        //cout<<"c"<<exename<<endl;
                         //deps->name=exename;
                         //split(Get_Data(Dependancys[i], "source.Deps"), Dependancys_of_this, ' ');
                                         DepTree *k = buildTree(Dependancys[i]);
@@ -283,6 +293,7 @@ int main(int argc, char **argv)
         Ch.push_back("Source");
         Ch.push_back("Build");
         Ch.push_back("Deps");
+        Ch.push_back("Git");
         Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit | \\ : Back ", 25, 5);
         vign *IKD = new vign(Ch, 2, 1);
 
@@ -291,10 +302,12 @@ int main(int argc, char **argv)
         MSTS *Exename = new MSTS("|Executable Name", "None", "Config.Exe");
         MSTS *AddLib = new MSTS("|Add Lib", "_", "");
         MSTS *AddDependancy = new MSTS("|Add Dependancy", "_", "");
+        MSTS *AddInclude = new MSTS("|Add Include", "_", "");
         Config->add_MSTS(Projectname, 0); // ("|Project name:"+projectname,7,5);
         Config->add_MSTS(Exename, 1);     // ("|Project EXE :"+EXEname,8,5);
         Config->add_MSTS(AddLib, 2);
         Config->add_MSTS(AddDependancy, 3);
+        Config->add_MSTS(AddInclude,4);
         EditorView *gpp = new EditorView(3, 1);
 
         dropdownlist *buildtype = new dropdownlist(6, 1);
@@ -303,6 +316,7 @@ int main(int argc, char **argv)
         MSTS *CppVersion = new MSTS("|C++ Version", "c++17", "G++.C++");
         MSTS *Target = new MSTS("|Target (executable/shared/static)", "shared", "G++.Target");
         EditorView *source = new EditorView(6, 1);
+        EditorView *Git = new EditorView(6, 1);
         MSTS *sourceFiles = new MSTS("|", "main.cpp", "source.files");
         MSTS *sourceTarget = new MSTS("|Add Src file", "_", "");
         source->add_MSTS(sourceTarget, 0);
@@ -314,8 +328,9 @@ int main(int argc, char **argv)
 
         EditorView *addsrc = new EditorView(3, 1);
 
-        EditorView *addobj = new EditorView(7, 1);
-        EditorView *addDep = new EditorView(7, 1);
+        EditorView *addobj = new EditorView(9, 1);
+        EditorView *addDep = new EditorView(9, 1);
+        EditorView *addinc = new EditorView(9, 1);
 
         MSTS *pathFiles = new MSTS("|Path to Source file", "_", "");
         MSTS *ObjName = new MSTS("|Obj-Name", "_", "");
@@ -332,6 +347,11 @@ int main(int argc, char **argv)
         addDep->add_MSTS(DepPath, 0);
         addDep->add_MSTS(DSaveBtn, 1);
 
+        MSTS *INCPath = new MSTS("|Path to include", "_", "");
+        MSTS *ISaveBtn = new MSTS("|", "Save", "");
+        addinc->add_MSTS(INCPath, 0);
+        addinc->add_MSTS(ISaveBtn, 1);
+
         addsrc->Visible = 0;
         buildtype->Visible = 0;
         CompileBuild->Visible = 0;
@@ -342,10 +362,17 @@ int main(int argc, char **argv)
         MSTS *MSTS_objfiles = new MSTS("|objs", "", "source.cppobj");
         MSTS *MSTS_objLib = new MSTS("|Libs", "", "source.Libs");
         MSTS *MSTS_Dependancy = new MSTS("|Dependancys", "", "source.Deps");
+        MSTS *MSTS_Includes = new MSTS("|includes", "", "source.includes");
+
+        MSTS *MSTS_Git = new MSTS("|includes", "", "git.usr");
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
         source->add_MSTS(MSTS_Dependancy, 4);
+        source->add_MSTS(MSTS_Includes,5);
+
+        Git->add_MSTS()
+
         buildtype->Key = "|Build Type     ";
         buildtype->Alias = "Build.Type";
         buildtype->add_MSTS(MSTS_Excutable, 0);
@@ -363,11 +390,13 @@ int main(int argc, char **argv)
         CompileBuild->add_MSTS(LinkButton, 2);
         //MF->addView()
         addobj->Visible = 0;
+        addinc->Visible = 0;
         addDep->Visible = 0;
         DepTree *Project = buildTree(argv[1]);
         MF->addView(addDep);
         MF->addView(addobj);
         MF->addView(CompileBuild);
+        MF->addView(addinc);
         MF->addView(addsrc);
         MF->addView(source);
         MF->addView(I);
@@ -401,7 +430,7 @@ int main(int argc, char **argv)
 
         if (strcmp(command.c_str(), "build") == 0)
         {
-                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                compile(MSTS_objfiles, MSTS_sourcefiles,MSTS_Includes, gpp->Values[0]->_Value);
                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
         }
         else
@@ -429,7 +458,7 @@ int main(int argc, char **argv)
                                 buildtype->Visible = 0;
                                 //MF->addView()
                                 //Projectname->_Value=to_string(Config->current_index);
-                                if ((Lock) && (((Config->current_index != 2) && (Config->current_index != 3)) && Config->current_index >= 0))
+                                if ((Lock) && (((Config->current_index != 2) && (Config->current_index != 3)&& (Config->current_index != 4)) && Config->current_index >= 0))
                                 {
                                         Config->Values[Config->current_index]->_Value = buffer;
                                 }
@@ -446,6 +475,14 @@ int main(int argc, char **argv)
                                         //addDep->render();
 
                                         Config->current_index = -2;
+                                        Lock = 0;
+                                }
+                                else if ((Config->current_index == 4) && (Lock))
+                                {
+                                        addinc->Visible = 1;
+                                        //addDep->render();
+
+                                        Config->current_index = -3;
                                         Lock = 0;
                                 }
                                 else if (Config->current_index == -1)
@@ -474,6 +511,19 @@ int main(int argc, char **argv)
                                                 }
                                         }
                                 }
+                                else if (Config->current_index == -3)
+                                {
+                                        if (Lock)
+                                        {
+                                                if (addinc->current_index == 0)
+                                                        addinc->Values[addinc->current_index]->_Value = buffer;
+                                                else
+                                                {
+                                                        MSTS_Includes->_Value += addinc->Values[0]->_Value + ' ';
+                                                        Lock = 0;
+                                                }
+                                        }
+                                }
                                 if ((Config->current_index == -1) && (addobj->Visible == 0))
                                 {
                                         Config->current_index = 2;
@@ -482,9 +532,14 @@ int main(int argc, char **argv)
                                 {
                                         Config->current_index = 3;
                                 }
+                                if ((Config->current_index == -3) && (addinc->Visible == 0))
+                                {
+                                        Config->current_index = 4;
+                                }
                                 gpp->clear();
                                 gpp->Visible = 0;
                                 Config->Visible = 1;
+                                addinc->render();
                                 addDep->render();
                                 addobj->render();
                                 Config->render();
@@ -578,13 +633,13 @@ int main(int argc, char **argv)
                                         {
                                         case 0:
                                                 //build
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles,MSTS_Includes, gpp->Values[0]->_Value);
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
                                                 /* code */
                                                 break;
                                         case 1:
                                                 //compile
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, gpp->Values[0]->_Value);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles,MSTS_Includes, gpp->Values[0]->_Value);
                                                 break;
                                         case 2:
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
@@ -605,6 +660,9 @@ int main(int argc, char **argv)
                 Project->render();
 
         MF->addView(Project);
+
+                        }
+                        else if(IKD->current_index==5){
 
                         }
 
@@ -633,8 +691,17 @@ int main(int argc, char **argv)
                         {
                                 if (IKD->current_index == 0)
                                 {
-                                        Config->current_index = 0;
+                                         
+                                        if(Config->current_index==-1)
+                                        Config->current_index = 2;
+                                        else if(Config->current_index==-2)
+                                        Config->current_index = 3;
+                                        else if(Config->current_index==-3)
+                                        Config->current_index = 4;
+
+                                        addinc->Visible=0;
                                         addobj->Visible = 0;
+                                        addDep->Visible=0;
                                 }
                                 else if (IKD->current_index == 2)
                                 {
@@ -682,6 +749,9 @@ int main(int argc, char **argv)
                                         //pathFiles->_Value+' ';
                                         //ObjName->_Value+' ';
                                 }
+                                else if(addsrc->current_index==0&&Lock==0){
+                                        Lock=1;
+                                }
                                 else if (IKD->current_index == 3)
                                 {
                                 }
@@ -715,6 +785,10 @@ int main(int argc, char **argv)
                                         {
                                                 if (!(addDep->current_index >= addDep->Values.size() - 1))
                                                         addDep->current_index++;
+                                        }
+                                        else if(Config->current_index == -3){
+                                                if (!(addinc->current_index >= addinc->Values.size() - 1))
+                                                        addinc->current_index++;
                                         }
                                         else if (!(Config->current_index >= Config->Values.size() - 1))
                                                 Config->current_index++;
@@ -773,6 +847,11 @@ int main(int argc, char **argv)
                                         {
                                                 if ((addDep->current_index > 0))
                                                         addDep->current_index--;
+                                        }
+                                        else if (Config->current_index == -3)
+                                        {
+                                                if ((addinc->current_index > 0))
+                                                        addinc->current_index--;
                                         }
                                         else if ((Config->current_index > 0))
                                                 Config->current_index--;
