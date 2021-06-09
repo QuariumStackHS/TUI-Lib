@@ -699,6 +699,7 @@ int main(int argc, char **argv)
                                         }
                                         Git_Commit->render();
                                 }
+                                Git_Commit->render();
                         }
 
                         MF->Render();
