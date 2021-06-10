@@ -87,10 +87,17 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV)
                 {
                         stringstream ss;
                         ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring;
-                        ret += system(ss.str().c_str());
+                        ret = system(ss.str().c_str());
                         //cout << ss.str() << endl;
-
-                        cout << ss.str() << endl;
+                        if (ret == 0)
+                        {
+                                cout << GREEN << "Compiled: \"" << YELLOW << SRCs[i] << GREEN << "\" Successfully!" << RESET << endl;
+                        }
+                        else
+                        {
+                                cout << RED << "Error while trying to compile \"" << YELLOW << SRCs[i] << RED << "\" !" << RESET << endl;
+                                cout << ss.str() << " = " << ret / 256 << endl;
+                        }
                 }
                 else
                 {
@@ -179,64 +186,90 @@ string Get_Data(string Dependancy, string Key)
 
 int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string thisprog)
 {
-        vector<string> Dependancys;
-        string Dependancys_libs;
-        split(Deps->_Value, Dependancys, ' ');
-        for (int i = 0; i < Dependancys.size(); i++)
+        if (buildT != 2)
         {
-                if (strcmp(Dependancys[i].c_str(), "") != 0)
+                vector<string> Dependancys;
+                string Dependancys_libs;
+                split(Deps->_Value, Dependancys, ' ');
+                string Objects;
+                for (int i = 0; i < Dependancys.size(); i++)
                 {
-                        string exename = Get_Data(Dependancys[i], "Config.Exe");
-                        int buildtype;
-
-                        try
+                        if (strcmp(Dependancys[i].c_str(), "") != 0)
                         {
-                                buildtype = stoi(Get_Data(Dependancys[i], "Build.Type"));
+                                string exename = Get_Data(Dependancys[i], "Config.Exe");
+                                int buildtype;
 
-                                string compileDepcommand = thisprog + " " + Dependancys[i] + " build";
-                                switch (buildtype)
+                                try
                                 {
-                                case 0:
-                                        cout << "Dependancy \"" << Dependancys[i] << "\" as a builtype of 0" << endl;
-                                        break;
-                                case 1:
+                                        buildtype = stoi(Get_Data(Dependancys[i], "Build.Type"));
 
-                                        system(compileDepcommand.c_str());
-                                        Dependancys_libs += (" " + exename);
-                                        break;
-                                case 2:
-                                        system(compileDepcommand.c_str());
-                                        Dependancys_libs += (" " + exename);
-                                        break;
-                                default:
-                                        break;
+                                        string compileDepcommand = thisprog + " " + Dependancys[i] + " build";
+                                        switch (buildtype)
+                                        {
+                                        case 0:
+                                                cout << "Dependancy \"" << Dependancys[i] << "\" as a builtype of 0" << endl;
+                                                break;
+                                        case 1:
+
+                                                system(compileDepcommand.c_str());
+                                                Dependancys_libs += (" " + exename);
+                                                break;
+                                        case 2:
+                                                Objects = Get_Data(Dependancys[i], "source.cppobj");
+                                                system(compileDepcommand.c_str());
+                                                Dependancys_libs += (" " + Objects);
+                                                break;
+                                        default:
+                                                break;
+                                        }
+                                }
+                                catch (const std::exception &e)
+                                {
                                 }
                         }
-                        catch (const std::exception &e)
+                }
+                stringstream ss;
+                ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o " << buildname << Dependancys_libs;
+                int sw;
+                switch (buildT)
+                {
+                case 0:
+                        /* code */
+                        sw = system(ss.str().c_str());
+
+                        break;
+                case 1:
+                        ss << " -shared";
+                        sw = system(ss.str().c_str());
+
+                        break;
+                case 2:
+
+                        /* code */
+                        break;
+                default:
+                        break;
+                }
+                if (sw == 0)
+                {
+                        cout << GREEN << "Linked: \"" << YELLOW << buildname << GREEN << "\" Succesfully!" << RESET << endl;
+                }
+                else
+                {
+                        cout << ss.str() << " = " << sw / 256 << endl;
+                }
+                vector<string> objects;
+                split(OBJ->_Value, objects, ' ');
+                for (int i = 0; i < objects.size(); i++)
+                {
+                        if (!(strcmp(objects[i].c_str(), " ") == 0) || !(strcmp(objects[i].c_str(), "") == 0))
                         {
+                                //cout<<objects[i]<<endl;
+                                remove(objects[i].c_str());
                         }
                 }
         }
-        stringstream ss;
-        ss << "g++ " << OBJ->_Value << LIBS->_Value << "-o " << buildname << Dependancys_libs;
-        switch (buildT)
-        {
-        case 0:
-                /* code */
-                break;
-        case 1:
-                ss << " -shared";
-                break;
-        case 2:
-                ss << " -static";
-                /* code */
-                break;
-        default:
-                break;
-        }
         //ss<<" &>> Logs.GP";
-        cout << ss.str() << endl;
-        system(ss.str().c_str());
 }
 
 DepTree *buildTree(string RGPFILE)
@@ -302,6 +335,7 @@ int main(int argc, char **argv)
         Ch.push_back("Build");
         Ch.push_back("Deps");
         Ch.push_back("Git");
+        Ch.push_back("Doc");
         Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit | \\ : Back ", 25, 5);
         vign *IKD = new vign(Ch, 2, 1);
 
@@ -354,7 +388,19 @@ int main(int argc, char **argv)
         MSTS *DSaveBtn = new MSTS("|", "Save", "");
         addDep->add_MSTS(DepPath, 0);
         addDep->add_MSTS(DSaveBtn, 1);
-
+        View *Docs = new View();
+        Docs->add_Horizon("This is the Documentation about 'cgp'", 3, 1);
+        Docs->add_Horizon("~In the Config section in top Right,", 4, 1);
+        Docs->add_Horizon("    you can add Library, Dependancy and include path ,", 5, 1);
+        Docs->add_Horizon("~In the G++ section, you can setup every thing", 7, 1);
+        Docs->add_Horizon("                     that is important", 8, 1);
+        Docs->add_Horizon("~In the Source section you can manage source files", 10, 1);
+        Docs->add_Horizon("~In the Build section you can compile,link or build!", 12, 1);
+        Docs->add_Horizon("~In the Deps section you have a tree of Dependancy(Work In Progress)", 14, 1);
+        Docs->add_Horizon("~In the Git section you can commit,push or fetch ", 16, 1);
+        Docs->add_Horizon("NOTE: Dependancy are Config File of cgp (.gp/.cg)", 18, 1);
+        Docs->add_Horizon("      When building the parent, cgp will build every dependancy", 19, 1);
+        Docs->add_Horizon("                                and will link concidering of it", 20, 1);
         MSTS *INCPath = new MSTS("|Path to include", "_", "");
         MSTS *ISaveBtn = new MSTS("|", "Save", "");
         addinc->add_MSTS(INCPath, 0);
@@ -411,9 +457,11 @@ int main(int argc, char **argv)
         addobj->Visible = 0;
         addinc->Visible = 0;
         addDep->Visible = 0;
-        Git_Commit->Visible=0;
+        Git_Commit->Visible = 0;
         DepTree *Project = buildTree(argv[1]);
+        Docs->Visible = 0;
         MF->addView(Git_Commit);
+        MF->addView(Docs);
         MF->addView(Git);
         MF->addView(addDep);
         MF->addView(addobj);
@@ -688,6 +736,8 @@ int main(int argc, char **argv)
                         }
                         else if (IKD->current_index == 5)
                         {
+                                Docs->Visible = 0;
+                                //Docs->clear();
                                 Project->Visible = 0;
                                 Git->Visible = 1;
                                 Git->render();
@@ -699,25 +749,33 @@ int main(int argc, char **argv)
                                                 cmd += Git_Commit->Values[0]->_Value + "\"";
                                                 buffer = "";
                                                 system(cmd.c_str());
-                                                cout<<cmd<<endl;
+                                                cout << cmd << endl;
                                                 char i;
-                                                cin>>i;
-                                                Lock=0;
-                                                Git_Commit->Visible=0;
-                                                Git->current_index=0;
+                                                cin >> i;
+                                                Lock = 0;
+                                                Git_Commit->Visible = 0;
+                                                Git->current_index = 0;
                                         }
                                         else
                                         {
                                                 Git_Commit->Values[0]->_Value = buffer;
-     
                                         }
                                         Git_Commit->render();
                                 }
                                 Git_Commit->render();
                         }
+                        else if (IKD->current_index == 6)
+                        {
+                                Git->Visible = 0;
+                                Git->clear();
+                                Git_Commit->clear();
+                                Git_Commit->Visible = 0;
+                                Docs->Visible = 1;
+                                Docs->render();
+                        }
 
                         MF->Render();
-                        MF->addView(IJ);
+                        //MF->addView(IJ);
                         MF->clear();
                         MF->Render();
                         system("clear");
@@ -774,7 +832,6 @@ int main(int argc, char **argv)
                         else if ((int)ch == (int)13)
                         {
 
-
                                 if (buildtype->ischoosing == 1)
                                 {
                                         buildtype->ischoosing = 0;
@@ -782,7 +839,7 @@ int main(int argc, char **argv)
                                         Lock = -1;
                                         gpp->current_index = 1;
                                 }
-                                                                if (Git->Visible == 1 && Git->current_index >= 0)
+                                if (Git->Visible == 1 && Git->current_index >= 0)
                                 {
                                         switch (Git->current_index)
                                         {
