@@ -1,0 +1,11 @@
+
+source.cppfiles = 'TUI.cpp '
+source.cppobj = 'Build/TUI.o '
+source.Libs = ''
+source.Deps = ''
+source.includes = 'include '
+Config.Project = 'TUI'
+Config.Exe = 'TUI'
+G++.C++ = 'c++17'
+ = '0'
+Build.Type = '2'

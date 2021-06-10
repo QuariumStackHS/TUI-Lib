@@ -1,0 +1,1 @@
+export PATH="/Users/christopherclement/Documents/TUI-Lib/Build/:$PATH"
