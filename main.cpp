@@ -745,7 +745,7 @@ int main(int argc, char **argv)
                                 {
                                         if (Git_Commit->current_index == 1)
                                         {
-                                                string cmd = "git commit -a -m \"";
+                                                string cmd = "git add --all && git commit -a -m \"";
                                                 cmd += Git_Commit->Values[0]->_Value + "\"";
                                                 buffer = "";
                                                 system(cmd.c_str());
