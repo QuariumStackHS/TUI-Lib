@@ -1,4 +1,5 @@
 
+source.Checksum_sha1 = 'd1b887e2672a2698bba1d40a28406db132a9f340 '
 source.cppfiles = 'TUI.cpp '
 source.cppobj = 'Build/TUI.o '
 source.Libs = ''

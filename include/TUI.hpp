@@ -19,7 +19,7 @@
 #define BOLDMAGENTA "\033[1m\033[35m" /* Bold Magenta */
 #define BOLDCYAN "\033[1m\033[36m"    /* Bold Cyan */
 #define BOLDWHITE "\033[1m\033[37m"
-#include <size.h>
+#include "size.h"
 using namespace std;
 
 class View
@@ -62,6 +62,17 @@ public:
     string Alias;
     string _Key;
     string _Value;
+};
+class MSTS_Vector
+{
+private:
+    vector<MSTS *> Mok;
+
+public:
+    MSTS_Vector();
+    void push_back(MSTS *);
+    MSTS *get_from_alias(string);
+    MSTS *get_from_Value(string);
 };
 
 class vign : public View
@@ -156,6 +167,8 @@ public:
     void Render();
     void clear();
     void Display();
+    void set_MSTS_Vector(MSTS_Vector*);
+    void load_into_Vector();
     void addView(View *);
     void addView(EditorView *);
     void addView(dropdownlist *);
@@ -167,6 +180,7 @@ public:
     void Load(string Filname);
 
 protected:
+MSTS_Vector*dvector;
     char Buffer[MaxX][MaxY];
     vector<View *> Views;
     vector<EditorView *> DATAC;

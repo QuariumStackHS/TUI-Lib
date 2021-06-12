@@ -1,0 +1,12 @@
+
+source.Checksum_sha1 = '40a3453d446ed72df1513ac663f43fc1c5e01e7d '
+source.cppfiles = 'ClAB.cpp '
+source.cppobj = 'Clab.o '
+source.Libs = ''
+source.Deps = ''
+source.includes = 'include'
+Config.Project = 'Command line app builder'
+Config.Exe = 'Clab++'
+G++.C++ = 'c++17'
+ = '0'
+Build.Type = '2'

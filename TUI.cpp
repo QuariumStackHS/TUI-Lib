@@ -425,6 +425,7 @@ void MasterView::Load(string Filename)
 
     else
         cout << "Unable to Load file\"" << Filename << "\"" << endl;
+
 }
 dropdownlist::dropdownlist(int X, int Y)
 {
@@ -511,4 +512,37 @@ DepTree::DepTree(int X, int Y)
 {
     this->x = X;
     this->y = Y;
+}
+    void MSTS_Vector::push_back(MSTS*Boddy){
+        this->Mok.push_back(Boddy);
+    }
+    MSTS*MSTS_Vector::get_from_alias(string al){
+        for(int i=0;i<this->Mok.size();i++){
+            if(strcmp(this->Mok[i]->Alias.c_str(),al.c_str())==0)
+                return this->Mok[i];
+        }
+        return new MSTS("","","");
+    }
+    MSTS*MSTS_Vector::get_from_Value(string al){
+        for(int i=0;i<this->Mok.size();i++){
+            if(strcmp(this->Mok[i]->_Value.c_str(),al.c_str())==0)
+                return this->Mok[i];
+        }
+        return new MSTS("","","");
+    }
+MSTS_Vector::MSTS_Vector(){
+
+}
+void MasterView::set_MSTS_Vector(MSTS_Vector* thatvector){
+this->dvector=thatvector;
+}
+void MasterView::load_into_Vector(){
+    for(int i=0;i<this->DATAC.size();i++){
+        for(int j=0;j<DATAC[i]->Values.size();j++)
+        this->dvector->push_back(DATAC[i]->Values[j]);
+    }
+    for(int i=0;i<this->DATAD.size();i++){
+        for(int j=0;j<DATAD[i]->EA.size();j++)
+        this->dvector->push_back(DATAD[i]->EA[j]);
+    }
 }

@@ -5,14 +5,16 @@
 this is an exemple of what you can do using TUI.hpp and TUI.cpp in this Repository
 
 */
+#include <CLAB.hpp>
 #include <TUI.hpp>
 #include <Keys.h>
-
+#include <sha1.hpp>
 #include <stdio.h>
 #include <sstream>
 #include <time.h>
 #include <unistd.h>
 #include <termios.h>
+int forcebuild = 0;
 size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
 {
         size_t pos = txt.find(ch);
@@ -63,16 +65,19 @@ char getch()
 
 */
 
-int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV)
+int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
 {
+        vector<string> Sha;
         vector<string> OBJs;
         vector<string> SRCs;
         vector<string> IN;
         split(INCl->_Value, IN, ' ');
         split(OBJ->_Value, OBJs, ' ');
         split(SRC->_Value, SRCs, ' ');
+        split(checkSums->_Value, Sha, ' ');
         //for(int i=0;OBJ)
         string includestring;
+        string Checks;
         int ret = 0;
         for (int i = 0; i < IN.size(); i++)
         {
@@ -81,22 +86,56 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV)
                         includestring += " -I" + IN[i];
                 }
         }
+
+        /*for (int i = 0; i < Sha.size(); i++)
+        {
+                if (!((strcmp(Sha[i].c_str(), " ") == 0) || (strcmp(Sha[i].c_str(), "") == 0)))
+                {
+                        //Checks += Sha[i]+' ';
+                }
+        }*/
+        checkSums->_Value = "";
+
         for (int i = 0; i < OBJs.size(); i++)
         {
+
                 if (!((strcmp(OBJs[i].c_str(), " ") == 0) || (strcmp(OBJs[i].c_str(), "") == 0)))
                 {
-                        stringstream ss;
-                        ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring;
-                        ret = system(ss.str().c_str());
-                        //cout << ss.str() << endl;
-                        if (ret == 0)
+                        string Shas = "";
+                        Shas = SHA1::from_file(SRCs[i]);
+                        bool havetocompile = 0;
+                        if (forcebuild == 1)
                         {
-                                cout << GREEN << "Compiled: \"" << YELLOW << SRCs[i] << GREEN << "\" Successfully!" << RESET << endl;
+                                havetocompile = 1;
+                        }
+                        else if (Sha.size() < i)
+                        {
+                                havetocompile = 1;
+                        }
+                        else if (strcmp(Sha[i].c_str(), Shas.c_str()) == 0)
+                        {
+                                cout << GREEN << "Object:\"" << YELLOW << SRCs[i] << GREEN << "\" same checksum in the last compilation!(" << YELLOW << Shas << GREEN << ")" << endl;
                         }
                         else
                         {
-                                cout << RED << "Error while trying to compile \"" << YELLOW << SRCs[i] << RED << "\" !" << RESET << endl;
-                                cout << ss.str() << " = " << ret / 256 << endl;
+                                havetocompile = 1;
+                        }
+                        checkSums->_Value += Shas + ' ';
+                        if (havetocompile)
+                        {
+                                stringstream ss;
+                                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring;
+                                ret = system(ss.str().c_str());
+                                //cout << ss.str() << endl;
+                                if (ret == 0)
+                                {
+                                        cout << GREEN << "Compiled: \"" << YELLOW << SRCs[i] << GREEN << "\" Successfully!" << RESET << endl;
+                                }
+                                else
+                                {
+                                        cout << RED << "Error while trying to compile \"" << YELLOW << SRCs[i] << RED << "\" !" << RESET << endl;
+                                        cout << ss.str() << " = " << ret / 256 << endl;
+                                }
                         }
                 }
                 else
@@ -203,7 +242,11 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
                                 {
                                         buildtype = stoi(Get_Data(Dependancys[i], "Build.Type"));
 
-                                        string compileDepcommand = thisprog + " " + Dependancys[i] + " build";
+                                        string compileDepcommand = thisprog + " " + Dependancys[i];
+                                        if(forcebuild==1)
+                                        compileDepcommand+=" --force";
+                                        
+                                        compileDepcommand+=" --build";
                                         switch (buildtype)
                                         {
                                         case 0:
@@ -265,7 +308,7 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
                         if (!(strcmp(objects[i].c_str(), " ") == 0) || !(strcmp(objects[i].c_str(), "") == 0))
                         {
                                 //cout<<objects[i]<<endl;
-                                remove(objects[i].c_str());
+                                //remove(objects[i].c_str());
                         }
                 }
         }
@@ -301,24 +344,39 @@ DepTree *buildTree(string RGPFILE)
 
         return MasterNode;
 }
+void *Forcebuild(char **, int, MSTS_Vector *)
+{
+        forcebuild = 1;
+}
+void *build(char ** argb, int argc, MSTS_Vector *IN)
+{
+        //IN->get_from_alias("source.Checksum_sha1");
+        //cout<<IN->get_from_alias("Build.Type")->_Value<<endl;
+        compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"));
+        link(IN->get_from_alias("source.cppobj"),IN->get_from_alias("source.Libs"),IN->get_from_alias("source.Deps"),IN->get_from_alias("Config.Exe")->_Value,argc,argb[0]);
+
+}
 int main(int argc, char **argv)
 {
+        CLAB<MSTS_Vector *> Laboratory;
+
+        MSTS_Vector *NLV = new MSTS_Vector();
+        Laboratory.add_Callable(&Forcebuild, "--force", "compile and link project without Verifying sha Signature", NLV);
+        Laboratory.add_Callable(&build, "--build", "compile and link project", NLV);
         string circlechar = "/|\\-";
         int XXindex = 0;
         //char**FakeArgs={"Begin:","<>","TT","TTTTT"};
         //Reltt_INT *Reltt=new Reltt_INT(argc,argv);
         MasterView *MF = new MasterView(MaxX, MaxY);
+        MF->set_MSTS_Vector(NLV);
         string Fname = "Base.rgp";
         string command = "";
-        if (argc == 2)
+        if (argc <= 1)
         {
-                Fname = argv[1];
+                cout << "you must pass the name of the config file!" << endl;
+                exit(0);
         }
-        else if (argc == 3)
-        {
-                Fname = argv[1];
-                command = argv[2];
-        }
+        Fname = argv[1];
 
         View *I = new View();
         //I->add_Horizon("--------------------------", 0, 0);
@@ -414,6 +472,7 @@ int main(int argc, char **argv)
         MSTS *MSTS_Static = new MSTS("", "Static", "");
         MSTS *MSTS_sourcefiles = new MSTS("|files", "", "source.cppfiles");
         MSTS *MSTS_objfiles = new MSTS("|objs", "", "source.cppobj");
+        MSTS *MSTS_fileSha1 = new MSTS("|Checksum(sha1)", "", "source.Checksum_sha1");
         MSTS *MSTS_objLib = new MSTS("|Libs", "", "source.Libs");
         MSTS *MSTS_Dependancy = new MSTS("|Dependancys", "", "source.Deps");
         MSTS *MSTS_Includes = new MSTS("|includes", "", "source.includes");
@@ -423,9 +482,13 @@ int main(int argc, char **argv)
         MSTS *MSTS_Git_Push = new MSTS("|Push", "_", "");
         //EditorView *Git_Push = new EditorView(9, 1);
         MSTS *MSTS_Git_Fetch = new MSTS("|Fetch", "_", "");
+        EditorView *Checksums = new EditorView(0, 0);
+        Checksums->Visible = 0;
+        Checksums->add_MSTS(MSTS_fileSha1, 0);
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
+
         source->add_MSTS(MSTS_Dependancy, 4);
         source->add_MSTS(MSTS_Includes, 5);
 
@@ -460,6 +523,7 @@ int main(int argc, char **argv)
         Git_Commit->Visible = 0;
         DepTree *Project = buildTree(argv[1]);
         Docs->Visible = 0;
+        MF->addView(Checksums);
         MF->addView(Git_Commit);
         MF->addView(Docs);
         MF->addView(Git);
@@ -497,11 +561,15 @@ int main(int argc, char **argv)
         MF->addView(Roue);
         //sourcebuffer;
         //objbuffer;
-
-        if (strcmp(command.c_str(), "build") == 0)
+        MF->load_into_Vector();
+        if (argc >= 3)
         {
-                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value);
-                link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
+                for (int i = 0; i < argc; i++)
+                {
+
+                        Laboratory.run(argv[i], argv, buildtype->current_index);
+                }
+                MF->Save(Fname);
         }
         else
         {
@@ -576,7 +644,7 @@ int main(int argc, char **argv)
                                                         addDep->Values[addDep->current_index]->_Value = buffer;
                                                 else
                                                 {
-                                                        MSTS_Dependancy->_Value += addDep->Values[0]->_Value + ' ';
+                                                        MSTS_Dependancy->_Value += ' ' + addDep->Values[0]->_Value;
                                                         Lock = 0;
                                                 }
                                         }
@@ -703,13 +771,15 @@ int main(int argc, char **argv)
                                         {
                                         case 0:
                                                 //build
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1);
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
+                                                MF->Save(Fname);
                                                 /* code */
                                                 break;
                                         case 1:
                                                 //compile
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1);
+                                                MF->Save(Fname);
                                                 break;
                                         case 2:
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
@@ -852,7 +922,7 @@ int main(int argc, char **argv)
                                                 system("git push --all");
                                                 break;
                                         case 2:
-                                                system("git fetch --all");
+                                                system("git fetch --all || git pull --all");
                                                 break;
 
                                         default:
