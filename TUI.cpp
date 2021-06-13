@@ -1,4 +1,5 @@
 #include "TUI.hpp"
+#include <cstring>
 #include <sstream>
 int Debug = 0;
 View::ViewChar::ViewChar(int X, int Y, char C)

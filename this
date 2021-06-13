@@ -1,9 +1,9 @@
 
-source.Checksum_sha1 = '27f005bda72b80a8618595173a2e36acf22437d0 ec5748e57c8a2f748eb7ea86eb09e7b80bff3509 '
+source.Checksum_sha1 = 'f999bf73aadabede354bb3926e9834063c178062 723fc9fb724595d6b30a8e97af52a0dd5b5460d9 '
 source.cppfiles = 'main.cpp SHA1.cpp '
-source.cppobj = 'main.o SHA1.o '
+source.cppobj = '.cgp/main.o .cgp/SHA1.o '
 source.Libs = ''
-source.Deps = 'TUI CLAB'
+source.Deps = 'TUI '
 source.includes = 'include '
 Config.Project = 'Main'
 Config.Exe = './Build/cgp'

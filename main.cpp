@@ -8,14 +8,26 @@ this is an exemple of what you can do using TUI.hpp and TUI.cpp in this Reposito
 #include <CLAB.hpp>
 #include <TUI.hpp>
 #include <Keys.h>
-#include <sha1.hpp>
-#include <stdio.h>
-#include <cstring>
+#include <SHA1.hpp>
+#include <iostream>
+#include <fstream>
+#include <cstdint>
+#include <filesystem>
+namespace fs = std::filesystem;
 #include <sstream>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 #include <termios.h>
 int forcebuild = 0;
+inline bool exists(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }   
+}
 size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
 {
         size_t pos = txt.find(ch);
@@ -36,6 +48,7 @@ size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
 
         return strs.size();
 }
+
 char getch()
 {
         char buf = 0;
@@ -99,13 +112,15 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
 
         for (int i = 0; i < OBJs.size(); i++)
         {
-
                 if (!((strcmp(OBJs[i].c_str(), " ") == 0) || (strcmp(OBJs[i].c_str(), "") == 0)))
                 {
                         string Shas = "";
-                        Shas = SHA1::from_file(SRCs[i]);
+                        Shas = SHA1::from_file(OBJs[i]);
                         bool havetocompile = 0;
-                        if (forcebuild == 1)
+                        if(exists("./"+SRCs[i])==false){
+                                havetocompile=1;
+                        }
+                        else if (forcebuild == 1)
                         {
                                 havetocompile = 1;
                         }
@@ -113,7 +128,7 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
                         {
                                 havetocompile = 1;
                         }
-                        else if (strcmp(Sha[i].c_str(), Shas.c_str()) == 0)
+                        else if ((strcmp(Sha[i].c_str(), Shas.c_str()) == 0))
                         {
                                 cout << GREEN << "Object:\"" << YELLOW << SRCs[i] << GREEN << "\" same checksum in the last compilation!(" << YELLOW << Shas << GREEN << ")" << endl;
                         }
@@ -356,8 +371,14 @@ void *build(char **argb, int argc, MSTS_Vector *IN)
         compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"));
         link(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.Libs"), IN->get_from_alias("source.Deps"), IN->get_from_alias("Config.Exe")->_Value, argc, argb[0]);
 }
+void mkdir(char*p){
+system((((string)"mkdir ")+p).c_str());
+}
 int main(int argc, char **argv)
 {
+        if(!fs::is_directory(".cgp")){
+                mkdir(".cgp/");
+        }
         CLAB<MSTS_Vector *> Laboratory;
 
         MSTS_Vector *NLV = new MSTS_Vector();
@@ -743,7 +764,7 @@ int main(int argc, char **argv)
                                         if (ch == 13)
                                         {
                                                 MSTS_sourcefiles->_Value += addsrc->Values[0]->_Value + " ";
-                                                MSTS_objfiles->_Value += addsrc->Values[1]->_Value + " ";
+                                                MSTS_objfiles->_Value += ".cgp/"+addsrc->Values[1]->_Value + " ";
                                                 addsrc->current_index = 0;
                                         }
                                         //cout<<objbuffer<<sourcebuffer<<endl;

@@ -1,7 +1,7 @@
 
 source.Checksum_sha1 = '9749f43bf656dd279d1a00acd0b0273ab4239a64 '
 source.cppfiles = 'CGPInstaller.cpp '
-source.cppobj = 'ins.o '
+source.cppobj = '.cgp/ins.o '
 source.Libs = ''
 source.Deps = ' TUI'
 source.includes = 'include '

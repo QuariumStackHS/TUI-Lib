@@ -1,9 +1,9 @@
-g++ TUI.cpp -std=c++17 -c -o TUI.o -Iinclude -w
-g++ main.cpp -std=c++17 -c -o main.o -Iinclude -w
-g++ SHA1.cpp -std=c++17 -c -o SHA1.o -Iinclude -w
-g++ CLAB.cpp -std=c++17 -c -o Clab.o -Iinclude -w
-g++ main.o TUI.o -o Build/cgp SHA1.o Clab.o
+g++ TUI.cpp -std=c++17 -c -o .cgp/TUI.o -Iinclude -w
+g++ main.cpp -std=c++17 -c -o .cgp/main.o -Iinclude -w
+g++ SHA1.cpp -std=c++17 -c -o .cgp/SHA1.o -Iinclude -w
+g++ CLAB.cpp -std=c++17 -c -o .cgp/Clab.o -Iinclude -w
+g++ .cgp/main.o .cgp/TUI.o -o Build/cgp .cgp/SHA1.o .cgp/Clab.o
 
-g++ CGPInstaller.cpp -std=c++17 -c -o ins.o -Iinclude -w
+g++ CGPInstaller.cpp -std=c++17 -c -o .cgp/ins.o -Iinclude -w
 
-g++ ins.o TUI.o -o CGPINSTALL
+g++ .cgp/ins.o .cgp/TUI.o -o CGPINSTALL

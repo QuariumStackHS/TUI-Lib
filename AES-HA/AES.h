@@ -1,1 +1,0 @@
-extern int aes128_self_test(void);

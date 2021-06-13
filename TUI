@@ -1,7 +1,7 @@
 
-source.Checksum_sha1 = 'd1b887e2672a2698bba1d40a28406db132a9f340 '
+source.Checksum_sha1 = 'da39a3ee5e6b4b0d3255bfef95601890afd80709 '
 source.cppfiles = 'TUI.cpp '
-source.cppobj = 'Build/TUI.o '
+source.cppobj = '.cgp/TUI.o '
 source.Libs = ''
 source.Deps = ''
 source.includes = 'include '
