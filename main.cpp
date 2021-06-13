@@ -10,6 +10,7 @@ this is an exemple of what you can do using TUI.hpp and TUI.cpp in this Reposito
 #include <Keys.h>
 #include <sha1.hpp>
 #include <stdio.h>
+#include <cstring>
 #include <sstream>
 #include <time.h>
 #include <unistd.h>
@@ -243,10 +244,10 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
                                         buildtype = stoi(Get_Data(Dependancys[i], "Build.Type"));
 
                                         string compileDepcommand = thisprog + " " + Dependancys[i];
-                                        if(forcebuild==1)
-                                        compileDepcommand+=" --force";
-                                        
-                                        compileDepcommand+=" --build";
+                                        if (forcebuild == 1)
+                                                compileDepcommand += " --force";
+
+                                        compileDepcommand += " --build";
                                         switch (buildtype)
                                         {
                                         case 0:
@@ -348,13 +349,12 @@ void *Forcebuild(char **, int, MSTS_Vector *)
 {
         forcebuild = 1;
 }
-void *build(char ** argb, int argc, MSTS_Vector *IN)
+void *build(char **argb, int argc, MSTS_Vector *IN)
 {
         //IN->get_from_alias("source.Checksum_sha1");
         //cout<<IN->get_from_alias("Build.Type")->_Value<<endl;
         compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"));
-        link(IN->get_from_alias("source.cppobj"),IN->get_from_alias("source.Libs"),IN->get_from_alias("source.Deps"),IN->get_from_alias("Config.Exe")->_Value,argc,argb[0]);
-
+        link(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.Libs"), IN->get_from_alias("source.Deps"), IN->get_from_alias("Config.Exe")->_Value, argc, argb[0]);
 }
 int main(int argc, char **argv)
 {
@@ -385,7 +385,7 @@ int main(int argc, char **argv)
         //I->add_Vertical("Reltt Runtime", 0, 0);
         View *IJ = new View();
         View *errors = new View();
-        View *Legend = new View();
+
         vector<string> Ch;
         Ch.push_back("Config");
         Ch.push_back("G++");
@@ -394,6 +394,7 @@ int main(int argc, char **argv)
         Ch.push_back("Deps");
         Ch.push_back("Git");
         Ch.push_back("Doc");
+        View *Legend = new View();
         Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Edit | \\ : Back ", 25, 5);
         vign *IKD = new vign(Ch, 2, 1);
 
