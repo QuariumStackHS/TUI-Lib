@@ -115,10 +115,13 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
                 if (!((strcmp(OBJs[i].c_str(), " ") == 0) || (strcmp(OBJs[i].c_str(), "") == 0)))
                 {
                         string Shas = "";
-                        Shas = SHA1::from_file(OBJs[i]);
+                        Shas = SHA1::from_file(SRCs[i]);
                         bool havetocompile = 0;
-                        if(exists("./"+SRCs[i])==false){
+                        if(exists("./"+OBJs[i])==false){
+                                cout<<BOLDRED<<"Missing Object:\""<<RESET<<BLUE<<OBJs[i]<<BOLDRED<<"\"!\nFall back did "<<RESET;
                                 havetocompile=1;
+
+
                         }
                         else if (forcebuild == 1)
                         {
@@ -132,9 +135,13 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
                         {
                                 cout << GREEN << "Object:\"" << YELLOW << SRCs[i] << GREEN << "\" same checksum in the last compilation!(" << YELLOW << Shas << GREEN << ")" << endl;
                         }
+                        else if((strcmp(Sha[i].c_str(), Shas.c_str()) != 0)){
+                                havetocompile = 1;
+                                
+                        }
                         else
                         {
-                                havetocompile = 1;
+                                havetocompile = 0;
                         }
                         checkSums->_Value += Shas + ' ';
                         if (havetocompile)
@@ -384,6 +391,7 @@ int main(int argc, char **argv)
         MSTS_Vector *NLV = new MSTS_Vector();
         Laboratory.add_Callable(&Forcebuild, "--force", "compile and link project without Verifying sha Signature", NLV);
         Laboratory.add_Callable(&build, "--build", "compile and link project", NLV);
+        //Laboratory.add_Callable(&update, "--update", "compile and link project", NLV);
         string circlechar = "/|\\-";
         int XXindex = 0;
         //char**FakeArgs={"Begin:","<>","TT","TTTTT"};
