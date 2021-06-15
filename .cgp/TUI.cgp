@@ -1,6 +1,9 @@
 
 source.Checksum_sha1 = '4296c1327785e1763d9a8f8469c7f56d455589a6 '
-source.cppfiles = 'TUI.cpp '
+thiscfg = '.cgp/TUI.cgp'
+exe = 'Build/cgp'
+cwd = '/Users/christopherclement/Documents/TUI-Lib'
+source.cppfiles = 'src/TUI.cpp '
 source.cppobj = '.cgp/TUI.o '
 source.Libs = ''
 source.Deps = ''

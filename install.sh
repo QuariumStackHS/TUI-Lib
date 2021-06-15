@@ -1,3 +1,3 @@
 
 sh compile.sh
-./CGPINSTALL
+./.cgp/install-cgp

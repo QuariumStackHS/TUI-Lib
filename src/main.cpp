@@ -19,14 +19,39 @@ namespace fs = std::filesystem;
 #include <time.h>
 #include <unistd.h>
 #include <termios.h>
+string as_cgp(char *file)
+{
+        int i = 0;
+        bool isinext;
+        string ext;
+        while (file[i] != '\0')
+        {
+                if (file[i] == '.')
+                {
+                        isinext = 1;
+                }
+                if (isinext)
+                {
+                        ext.push_back(file[i]);
+                }
+                i++;
+        }
+        if (strcmp(ext.c_str(), ".cgp") == 0)
+                return file;
+        return ((((string)file) + ".cgp"));
+}
 int forcebuild = 0;
-inline bool exists(const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }   
+inline bool exists(const std::string &name)
+{
+        if (FILE *file = fopen(name.c_str(), "r"))
+        {
+                fclose(file);
+                return true;
+        }
+        else
+        {
+                return false;
+        }
 }
 size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
 {
@@ -117,11 +142,10 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
                         string Shas = "";
                         Shas = SHA1::from_file(SRCs[i]);
                         bool havetocompile = 0;
-                        if(exists("./"+OBJs[i])==false){
-                                cout<<BOLDRED<<"Missing Object:\""<<RESET<<BLUE<<OBJs[i]<<BOLDRED<<"\"!\nFall back did "<<RESET;
-                                havetocompile=1;
-
-
+                        if (exists("./" + OBJs[i]) == false)
+                        {
+                                cout << BOLDRED << "Missing Object:\"" << RESET << BLUE << OBJs[i] << BOLDRED << "\"!\nFall back did " << RESET;
+                                havetocompile = 1;
                         }
                         else if (forcebuild == 1)
                         {
@@ -135,9 +159,9 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
                         {
                                 cout << GREEN << "Object:\"" << YELLOW << SRCs[i] << GREEN << "\" same checksum in the last compilation!(" << YELLOW << Shas << GREEN << ")" << endl;
                         }
-                        else if((strcmp(Sha[i].c_str(), Shas.c_str()) != 0)){
+                        else if ((strcmp(Sha[i].c_str(), Shas.c_str()) != 0))
+                        {
                                 havetocompile = 1;
-                                
                         }
                         else
                         {
@@ -173,7 +197,7 @@ string Get_Data(string Dependancy, string Key)
         //Alias ='Value'\n
 
         string line;
-        ifstream myfile(Dependancy);
+        ifstream myfile(((string) ".cgp/") + as_cgp((char *)Dependancy.c_str()));
         if (myfile.is_open())
         {
 
@@ -337,7 +361,17 @@ int link(MSTS *OBJ, MSTS *LIBS, MSTS *Deps, string buildname, int buildT, string
         }
         //ss<<" &>> Logs.GP";
 }
-
+void CopyRecursive(const char *src, const char *target) noexcept
+{
+        try
+        {
+                fs::copy(src, target, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
+        }
+        catch (std::exception &e)
+        {
+                std::cout << e.what();
+        }
+}
 DepTree *buildTree(string RGPFILE)
 {
         vector<string> Dependancys;
@@ -378,19 +412,119 @@ void *build(char **argb, int argc, MSTS_Vector *IN)
         compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"));
         link(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.Libs"), IN->get_from_alias("source.Deps"), IN->get_from_alias("Config.Exe")->_Value, argc, argb[0]);
 }
-void mkdir(char*p){
-system((((string)"mkdir ")+p).c_str());
+void mkdir(const char *p)
+{
+        system((((string) "mkdir ") + p + " &>/dev/null").c_str());
+}
+void recursive_mkdir(const char *p)
+{
+        vector<string> kl;
+        vector<string> Steps;
+        split(p, kl, '/');
+        string current;
+        for (int i = 0; i < kl.size(); i++)
+        {
+                current += kl[i] + '/';
+                mkdir(current.c_str());
+        }
+}
+void *_export(char **argb, int argc, MSTS_Vector *IN)
+{
+        string exportPath;
+        bool nextis;
+        for (int i = 0; i < argc; i++)
+        {
+                if (strcmp(argb[i], "--export") == 0)
+                        nextis = 1;
+                else if (nextis)
+                        exportPath = argb[i];
+        }
+        recursive_mkdir(exportPath.c_str());
+        string ss = (exportPath) + "/.cgp/";
+        recursive_mkdir(ss.c_str());
+
+        string thiscfg = IN->get_from_alias("thiscfg")->_Value;
+        ss = exportPath + '/' + thiscfg;
+        CopyRecursive(thiscfg.c_str(), ss.c_str());
+
+        //CopyRecursive();
+        vector<string> source;
+        vector<string> Deps;
+        //cout<<thiscfg<<endl;
+        vector<string> dirs;
+        split(IN->get_from_alias("Config.Exe")->_Value, dirs, '/');
+        string patha = exportPath + "/";
+        for (int j = 0; j < dirs.size() - 1; j++)
+        {
+                patha += dirs[j];
+        }
+        recursive_mkdir(patha.c_str());
+        split(IN->get_from_alias("source.Deps")->_Value, Deps, ' ');
+        split(IN->get_from_alias("source.cppfiles")->_Value, source, ' ');
+        //cout<<IN->get_from_alias("source.cppfiles")->_Value<<endl;;
+        for (int i = 0; i < source.size(); i++)
+        {
+                //cout<<source[i]<<endl;
+                if ((strcmp(source[i].c_str(), " ") != 0) && (strcmp(source[i].c_str(), "") != 0))
+                {
+                        vector<string> dir;
+                        split(source[i], dir, '/');
+                        string path = exportPath + "/";
+                        for (int j = 0; j < dir.size() - 1; j++)
+                        {
+                                path += dir[j];
+                        }
+                        recursive_mkdir(path.c_str());
+                        path += '/' + dir[dir.size() - 1];
+                        CopyRecursive(source[i].c_str(), path.c_str());
+                }
+        }
+        for (int i = 0; i < Deps.size(); i++)
+        {
+                if ((strcmp(Deps[i].c_str(), " ") != 0) && (strcmp(Deps[i].c_str(), "") != 0))
+                {
+                        string cmd = IN->get_from_alias("exe")->_Value + ' ' + Deps[i] + " --export " + exportPath;
+                        system(cmd.c_str());
+                }
+        }
+        vector<string> includes;
+        split(IN->get_from_alias("source.includes")->_Value, includes, ' ');
+        for (int i = 0; i < includes.size(); i++)
+        {
+                if ((strcmp(includes[i].c_str(), " ") != 0) && (strcmp(includes[i].c_str(), "") != 0))
+                {
+                        CopyRecursive(includes[i].c_str(), (exportPath + "/" + includes[i]).c_str());
+                }
+        }
 }
 int main(int argc, char **argv)
 {
-        if(!fs::is_directory(".cgp")){
+        if (argc <= 1)
+        {
+                cout << "you must pass the name of the config file!" << endl;
+                exit(0);
+        }
+        vector<string> dirs;
+        split(argv[1], dirs, '/');
+        string path;
+        for (int j = 0; j < dirs.size() - 1; j++)
+        {
+                path += dirs[j];
+        }
+        if (strcmp(path.c_str(), "") != 0)
+                fs::current_path(path.c_str());
+        if (!fs::is_directory(".cgp"))
+        {
                 mkdir(".cgp/");
         }
         CLAB<MSTS_Vector *> Laboratory;
+        CLAB<MSTS_Vector *> LaboratoryCmd;
 
         MSTS_Vector *NLV = new MSTS_Vector();
         Laboratory.add_Callable(&Forcebuild, "--force", "compile and link project without Verifying sha Signature", NLV);
         Laboratory.add_Callable(&build, "--build", "compile and link project", NLV);
+        LaboratoryCmd.add_Callable(&_export, "--export", "export project to a folder", NLV);
+        // Laboratory.add_Callable(&build, "--add-git-dep", "add a git ", NLV);
         //Laboratory.add_Callable(&update, "--update", "compile and link project", NLV);
         string circlechar = "/|\\-";
         int XXindex = 0;
@@ -398,15 +532,13 @@ int main(int argc, char **argv)
         //Reltt_INT *Reltt=new Reltt_INT(argc,argv);
         MasterView *MF = new MasterView(MaxX, MaxY);
         MF->set_MSTS_Vector(NLV);
-        string Fname = "Base.rgp";
+        string Fname = ".cgp/";
         string command = "";
-        if (argc <= 1)
-        {
-                cout << "you must pass the name of the config file!" << endl;
-                exit(0);
-        }
-        Fname = argv[1];
 
+        Fname += as_cgp((char *)dirs[dirs.size() - 1].c_str());
+        MSTS *thisinfo = new MSTS("", Fname, "thiscfg");
+        MSTS *thisinfoargv0 = new MSTS("", argv[0], "exe");
+        MSTS *currentworkingdir = new MSTS("", fs::current_path(), "cwd");
         View *I = new View();
         //I->add_Horizon("--------------------------", 0, 0);
         //I->add_Horizon("IP\t|\tDomaine\t|\tPort\t|\tName\0", 0, 0);
@@ -515,6 +647,9 @@ int main(int argc, char **argv)
         EditorView *Checksums = new EditorView(0, 0);
         Checksums->Visible = 0;
         Checksums->add_MSTS(MSTS_fileSha1, 0);
+        Checksums->add_MSTS(thisinfo, 1);
+        Checksums->add_MSTS(thisinfoargv0, 2);
+        Checksums->add_MSTS(currentworkingdir, 3);
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
@@ -596,7 +731,7 @@ int main(int argc, char **argv)
         {
                 for (int i = 0; i < argc; i++)
                 {
-
+                        LaboratoryCmd.run(argv[i], argv, argc);
                         Laboratory.run(argv[i], argv, buildtype->current_index);
                 }
                 MF->Save(Fname);
@@ -674,7 +809,7 @@ int main(int argc, char **argv)
                                                         addDep->Values[addDep->current_index]->_Value = buffer;
                                                 else
                                                 {
-                                                        MSTS_Dependancy->_Value += ' ' + addDep->Values[0]->_Value;
+                                                        MSTS_Dependancy->_Value += " .cgp/" + addDep->Values[0]->_Value;
                                                         Lock = 0;
                                                 }
                                         }
@@ -772,7 +907,7 @@ int main(int argc, char **argv)
                                         if (ch == 13)
                                         {
                                                 MSTS_sourcefiles->_Value += addsrc->Values[0]->_Value + " ";
-                                                MSTS_objfiles->_Value += ".cgp/"+addsrc->Values[1]->_Value + " ";
+                                                MSTS_objfiles->_Value += ".cgp/" + addsrc->Values[1]->_Value + " ";
                                                 addsrc->current_index = 0;
                                         }
                                         //cout<<objbuffer<<sourcebuffer<<endl;
@@ -845,7 +980,7 @@ int main(int argc, char **argv)
                                 {
                                         if (Git_Commit->current_index == 1)
                                         {
-                                                string cmd = "git add --all && git commit -a -m \"";
+                                                string cmd = "git add --all ; git commit -a -m \"";
                                                 cmd += Git_Commit->Values[0]->_Value + "\"";
                                                 buffer = "";
                                                 system(cmd.c_str());
@@ -952,7 +1087,7 @@ int main(int argc, char **argv)
                                                 system("git push --all");
                                                 break;
                                         case 2:
-                                                system("git fetch --all || git pull --all");
+                                                system("git fetch --all ; git pull --all");
                                                 break;
 
                                         default:
