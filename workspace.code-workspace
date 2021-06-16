@@ -14,7 +14,8 @@
 			"filesystem": "cpp",
 			"ostream": "cpp",
 			"stdexcept": "cpp",
-			"algorithm": "cpp"
+			"algorithm": "cpp",
+			"ios": "c"
 		}
 	}
 }

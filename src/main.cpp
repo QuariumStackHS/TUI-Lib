@@ -104,8 +104,11 @@ char getch()
 
 */
 
-int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
+int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums,MSTS*addsw)
 {
+        //cout<<addsw->_Value<<endl;
+        //char i;
+        //cin>>i;
         vector<string> Sha;
         vector<string> OBJs;
         vector<string> SRCs;
@@ -171,7 +174,7 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums)
                         if (havetocompile)
                         {
                                 stringstream ss;
-                                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring;
+                                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring<<" "<<addsw->_Value;
                                 ret = system(ss.str().c_str());
                                 //cout << ss.str() << endl;
                                 if (ret == 0)
@@ -409,7 +412,7 @@ void *build(char **argb, int argc, MSTS_Vector *IN)
 {
         //IN->get_from_alias("source.Checksum_sha1");
         //cout<<IN->get_from_alias("Build.Type")->_Value<<endl;
-        compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"));
+        compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"),IN->get_from_alias("compile.Switchs"));
         link(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.Libs"), IN->get_from_alias("source.Deps"), IN->get_from_alias("Config.Exe")->_Value, argc, argb[0]);
 }
 void mkdir(const char *p)
@@ -645,11 +648,13 @@ int main(int argc, char **argv)
         //EditorView *Git_Push = new EditorView(9, 1);
         MSTS *MSTS_Git_Fetch = new MSTS("|Fetch", "_", "");
         EditorView *Checksums = new EditorView(0, 0);
+        MSTS*compilesw=new MSTS("","","compile.Switchs");
         Checksums->Visible = 0;
         Checksums->add_MSTS(MSTS_fileSha1, 0);
         Checksums->add_MSTS(thisinfo, 1);
         Checksums->add_MSTS(thisinfoargv0, 2);
         Checksums->add_MSTS(currentworkingdir, 3);
+        Checksums->add_MSTS(compilesw,4);
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
@@ -936,14 +941,14 @@ int main(int argc, char **argv)
                                         {
                                         case 0:
                                                 //build
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1,compilesw);
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
                                                 MF->Save(Fname);
                                                 /* code */
                                                 break;
                                         case 1:
                                                 //compile
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1,compilesw);
                                                 MF->Save(Fname);
                                                 break;
                                         case 2:
