@@ -1,0 +1,4 @@
+{
+    "port": "/dev/tty.usbmodem1432401",
+    "board": "arduino:samd:mkrzero"
+}

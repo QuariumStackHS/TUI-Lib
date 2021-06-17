@@ -6,6 +6,8 @@
 #include <stdio.h>
 
 using namespace std;
+ const int Keylengh =64;
+ const int IVlengh =32;
 
 class AES
 {

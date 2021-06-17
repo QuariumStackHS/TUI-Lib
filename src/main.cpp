@@ -104,7 +104,7 @@ char getch()
 
 */
 
-int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums,MSTS*addsw)
+int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums, MSTS *addsw)
 {
         //cout<<addsw->_Value<<endl;
         //char i;
@@ -174,7 +174,7 @@ int compile(MSTS *OBJ, MSTS *SRC, MSTS *INCl, string cppV, MSTS *checkSums,MSTS*
                         if (havetocompile)
                         {
                                 stringstream ss;
-                                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring<<" "<<addsw->_Value;
+                                ss << "g++ -w -std=" << cppV << " -c -o " << OBJs[i] << " " << SRCs[i] << includestring << " " << addsw->_Value;
                                 ret = system(ss.str().c_str());
                                 //cout << ss.str() << endl;
                                 if (ret == 0)
@@ -412,7 +412,7 @@ void *build(char **argb, int argc, MSTS_Vector *IN)
 {
         //IN->get_from_alias("source.Checksum_sha1");
         //cout<<IN->get_from_alias("Build.Type")->_Value<<endl;
-        compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"),IN->get_from_alias("compile.Switchs"));
+        compile(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.cppfiles"), IN->get_from_alias("source.includes"), IN->get_from_alias("G++.C++")->_Value, IN->get_from_alias("source.Checksum_sha1"), IN->get_from_alias("compile.Switchs"));
         link(IN->get_from_alias("source.cppobj"), IN->get_from_alias("source.Libs"), IN->get_from_alias("source.Deps"), IN->get_from_alias("Config.Exe")->_Value, argc, argb[0]);
 }
 void mkdir(const char *p)
@@ -431,6 +431,7 @@ void recursive_mkdir(const char *p)
                 mkdir(current.c_str());
         }
 }
+
 void *_export(char **argb, int argc, MSTS_Vector *IN)
 {
         string exportPath;
@@ -527,6 +528,7 @@ int main(int argc, char **argv)
         Laboratory.add_Callable(&Forcebuild, "--force", "compile and link project without Verifying sha Signature", NLV);
         Laboratory.add_Callable(&build, "--build", "compile and link project", NLV);
         LaboratoryCmd.add_Callable(&_export, "--export", "export project to a folder", NLV);
+        //LaboratoryCmd.add_Callable(&_import, "--import", "import project here", NLV);
         // Laboratory.add_Callable(&build, "--add-git-dep", "add a git ", NLV);
         //Laboratory.add_Callable(&update, "--update", "compile and link project", NLV);
         string circlechar = "/|\\-";
@@ -648,13 +650,13 @@ int main(int argc, char **argv)
         //EditorView *Git_Push = new EditorView(9, 1);
         MSTS *MSTS_Git_Fetch = new MSTS("|Fetch", "_", "");
         EditorView *Checksums = new EditorView(0, 0);
-        MSTS*compilesw=new MSTS("","","compile.Switchs");
+        MSTS *compilesw = new MSTS("", "", "compile.Switchs");
         Checksums->Visible = 0;
         Checksums->add_MSTS(MSTS_fileSha1, 0);
         Checksums->add_MSTS(thisinfo, 1);
         Checksums->add_MSTS(thisinfoargv0, 2);
         Checksums->add_MSTS(currentworkingdir, 3);
-        Checksums->add_MSTS(compilesw,4);
+        Checksums->add_MSTS(compilesw, 4);
         source->add_MSTS(MSTS_sourcefiles, 1);
         source->add_MSTS(MSTS_objfiles, 2);
         source->add_MSTS(MSTS_objLib, 3);
@@ -941,14 +943,14 @@ int main(int argc, char **argv)
                                         {
                                         case 0:
                                                 //build
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1,compilesw);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1, compilesw);
                                                 link(MSTS_objfiles, MSTS_objLib, MSTS_Dependancy, Config->Values[1]->_Value, buildtype->current_index, argv[0]);
                                                 MF->Save(Fname);
                                                 /* code */
                                                 break;
                                         case 1:
                                                 //compile
-                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1,compilesw);
+                                                compile(MSTS_objfiles, MSTS_sourcefiles, MSTS_Includes, gpp->Values[0]->_Value, MSTS_fileSha1, compilesw);
                                                 MF->Save(Fname);
                                                 break;
                                         case 2:

@@ -24,17 +24,35 @@ size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
 
         return strs.size();
 }
-
+inline bool exists(const std::string &name)
+{
+        if (FILE *file = fopen(name.c_str(), "r"))
+        {
+                fclose(file);
+                return true;
+        }
+        else
+        {
+                return false;
+        }
+}
 int main(){
     MasterView *MF=new MasterView(MaxX,MaxY);
     View *Legend = new View();
-
+    string oldins="";
+    if(exists("APath")){
+        ifstream in("APath",ios::out);
+        
+        in>>oldins;
+        Legend->add_Horizon(oldins,7,2);
+    }
     MF->addView(Legend);
     Legend->add_Horizon("| W : ↑ | A : ← | S : ↓ | D : → | Enter : Install | \\ : Back ", 25, 5);
     dropdownlist*Paths=new dropdownlist(2,2);
     vector<string>PATHS;
 
     split(getenv("PATH"),PATHS,':');
+
     //cout<<
     for(int i=0;i<PATHS.size();i++){
         string key=PATHS[i];
@@ -49,6 +67,15 @@ int main(){
         //cout<<PATHS[i]<<endl;
         MSTS*JSS=new MSTS(key,PATHS[i],"");
         Paths->add_MSTS(JSS,i);
+    }
+    if(strcmp(oldins.c_str(),"")!=0){
+        for(int i=0;i<Paths->EA.size();i++){
+            //cout<<oldins<<endl;
+            if(strcmp((Paths->EA[i]->_Key+'/').c_str(),oldins.c_str())==0){
+                //cout<<i;
+                Paths->current_index=i;
+            }
+        }
     }
     system("stty raw");
 MF->addView(Paths);
@@ -76,6 +103,10 @@ Paths->Alias="none";
             string cmd="sh compile.sh ; sudo cp Build/cgp "+Paths->EA[Paths->current_index]->_Key+"cgp";
             system(cmd.c_str());
             cout<<"Installed cgp to: "<<Paths->EA[Paths->current_index]->_Key<<endl;
+            ofstream i("APath",ios::out);
+            i<<Paths->EA[Paths->current_index]->_Key<<endl;
+            i.close();
+
             system("stty cooked");
             exit(0);
         }

@@ -1,8 +1,9 @@
 
-source.Checksum_sha1 = '772c1b872fee58b4fc2319f4308da84e82bda08f '
+source.Checksum_sha1 = '1dd14d9731b6f83b48c6b475f7ccf2a4da81e4f5 '
 thiscfg = '.cgp/installer.cgp'
 exe = 'Build/cgp'
 cwd = '/Users/christopherclement/Documents/TUI-Lib'
+compile.Switchs = ''
 source.cppfiles = 'src/CGPInstaller.cpp '
 source.cppobj = '.cgp/ins.o '
 source.Libs = ''
